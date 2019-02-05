@@ -24,12 +24,12 @@ Local Code for the PseudoRandom project. https://pseudorandom.glitch.me/
 * Top Right Menu: Toggle Tabs
 * Bottom Right Menu: Choose local game and player.
 
-*Turn Order*
+###### Turn Order
 * Top Left Menu: Turn Order display
 * Turn Order Hover: Highlight Troop
 * Turn Order Click: Anchor camera on Troop
 
-*Actions*
+###### Actions
 * Bottom Center Menu: Troop info & actions for the Playing Troop
 * Actions Table Hover: Show action description
 * Actions Table Click: Select & display action
