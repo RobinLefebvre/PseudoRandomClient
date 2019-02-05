@@ -49,7 +49,7 @@ class Troop
         this.turnActions = args.actionsPerTurn;
         this.actionsPerTurn = args.actionsPerTurn || 1;
 
-        if(args.actions && args.actions[0].name == "Dash")
+        if(args.actions[0] && args.actions[0].name == "Dash")
             this.actions = args.actions;
         else
         {

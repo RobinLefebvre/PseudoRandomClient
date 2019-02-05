@@ -137,7 +137,7 @@ function saveEncounter(json)
         let area = {};
         area.name = a.name;
         area.coloration = {r: a.coloration.levels[0], g: a.coloration.levels[1], b: a.coloration.levels[2], a: a.coloration.levels[3] };
-        for(let i = 0; i < a.shape.length; i++){a.shape[i] = {x : a.shape[i].x, y: a.shape[i].y} }
+        for(let i = 0; i < a.shape.length; i++){a.shape[i] = {x : a.shape[i].x, y:a.shape[i].y} }
         area.shape = JSON.stringify(a.shape);
         area.position = {x : a.position.x, y: a.position.y};
         area.radius = a.radius;

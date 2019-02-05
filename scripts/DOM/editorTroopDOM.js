@@ -2,6 +2,8 @@ let actionsAmount = 0;
 let traitsAmount = 0;
 let poolsAmount = 0;
 
+document.onload = writeEdit();
+
 function sendData()
 {
     let data = LocalData.getLocalStorage()
