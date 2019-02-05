@@ -2,11 +2,6 @@ let actionsAmount = 0;
 let traitsAmount = 0;
 let poolsAmount = 0;
 
-function setup ()
-{
-    writeEdit();
-}
-
 function sendData()
 {
     let data = LocalData.getLocalStorage()
