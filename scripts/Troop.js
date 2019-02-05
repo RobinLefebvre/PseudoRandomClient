@@ -103,6 +103,10 @@ class Troop
                     {
                         a.condition[key] = Number.parseInt(a.condition[key]);
                     }
+                    else if(a.condition[key] == "true")
+                    {
+                        a.condition[key] = true;
+                    }
                     else
                     {
                         a.condition[key] = a.condition[key];
