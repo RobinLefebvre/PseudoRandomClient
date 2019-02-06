@@ -6,7 +6,7 @@ html { height : 100%; font-family: 'Oswald', sans-serif; }
 canvas {z-index : -1;width : 100%;height : 100%;position : absolute;top : 0;left : 0;}
 
 /* body => Grid (24,24) */
-body{margin : 0; background-color : rgb(50,50,50); height : 100%;display : grid;grid-template-columns: repeat(24, 1fr);grid-template-rows: repeat(24, 1fr);}
+body{margin : 0; background-color : rgb(50,50,50); height : 100%;display : grid;grid-template-columns: repeat(24, 1fr);grid-template-rows: repeat(24, 1fr); overflow:hidden;}
 
 /** Header */
 header

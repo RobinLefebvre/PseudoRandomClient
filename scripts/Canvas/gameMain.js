@@ -12,7 +12,7 @@ let hoverDash;
 /** Setup is called once on document load*/
 function setup()
 {
-    canvas = createCanvas(windowWidth,windowHeight);
+    canvas = createCanvas(window.innerWidth,window.innerHeight);
     camera = new Camera();
     frameRate(48);
     windowResized = () => {resizeCanvas(windowWidth, windowHeight); camera.setScreenSize(); camera.setScreenCenterPoint();}
