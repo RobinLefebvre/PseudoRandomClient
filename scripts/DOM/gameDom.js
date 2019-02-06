@@ -132,7 +132,7 @@ function writeTroop(troop)
     if(playerName == troop.isPlayer)
     {
         elt+= `<table style="width:100%;" >`;
-        if(troop.hasTakenAction < troop.actionsPerTurn)
+        if(troop.hasTakenAction < troop.actionsPerTurn) // We have actions left
         {
             let tt = `game.initiativeOrder[game.currentIndex]`;
             elt+=`<th> <input onmouseout="toggleTab('action'); document.querySelector('#actionTab').innerHTML = ''; hoverDash = false;"; onmouseover="toggleTab('action');  document.querySelector('#actionTab').innerHTML = ${tt}.getActionDescription(0); hoverDash = true;" style="width:100%; font-size:1rem; background-color:rgb(50,50,50); border:none;" type="submit" value="${troop.actions[0].name}" onclick="actionInput = 0;" /> </th>`
@@ -148,14 +148,18 @@ function writeTroop(troop)
                             if(a.uses == -1 || (a.uses != -1 && troop.actionsPerTurn - troop.hasTakenAction - a.uses >= 0) )
                             {
                                 let u = ``;
-                                    if(a.uses != -1)
+
+                                if(a.uses != -1)
                                     u+= `(${a.uses})`
                                 if(a.pool && troop.pools[a.pool] != -1)
                                     u= `(${troop.pools[a.pool]})`;
                         
-                                elt+=`<th> <input onmouseout="toggleTab('action'); document.querySelector('#actionTab').innerHTML = ''"; onmouseover="toggleTab('action');  document.querySelector('#actionTab').innerHTML = ${tt}.getActionDescription(${i})" style="width:100%; font-size:1rem; background-color:rgb(50,50,50); border:none;" type="submit" value="${a.name} ${u}" onclick="actionInput = ${i};" /> </th>`
+                                if(!a.condition || !troop.hasCondition("name", a.condition.name) )
+                                {
+                                    elt+=`<th> <input onmouseout="toggleTab('action'); document.querySelector('#actionTab').innerHTML = ''"; onmouseover="toggleTab('action');  document.querySelector('#actionTab').innerHTML = ${tt}.getActionDescription(${i})" style="width:100%; font-size:1rem; background-color:rgb(50,50,50); border:none;" type="submit" value="${a.name} ${u}" onclick="actionInput = ${i};" /> </th>`
+                                }
                             }
-                            }
+                        }
                     }                            
                 }
             }

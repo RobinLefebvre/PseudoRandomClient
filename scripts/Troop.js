@@ -47,7 +47,7 @@ class Troop
         this.movement = this.speed;
 
         this.turnActions = args.actionsPerTurn;
-        this.actionsPerTurn = args.actionsPerTurn || 1;
+        this.actionsPerTurn = this.turnActions || 1;
 
         if(args.actions[0] && args.actions[0].name == "Dash")
             this.actions = args.actions;
@@ -103,7 +103,7 @@ class Troop
                     {
                         a.condition[key] = Number.parseInt(a.condition[key]);
                     }
-                    else if(a.condition[key] === "true")
+                    else if(a.condition[key] == "true")
                     {
                         a.condition[key] = true;
                     }
@@ -555,9 +555,9 @@ class Troop
     /** use Action onto a target
      * @param {Integer} actionIndex : the index of the action in this.actions
      * @param {Troop} target : the recipient of the action */
-    useAction(actionIndex, target)
+    useAction(actionIndex, target, sharedDamage)
     {
-        let action = this.actions[actionIndex] 
+        let action = this.actions[actionIndex];
         if(action.uses != 0 )
         {
             if(action.target !== "Self" || target.name !== this.name) 
@@ -565,7 +565,6 @@ class Troop
             else
                 logs(`${this.htmlName} uses ${action.name}`);
 
-            
             let toHit = this.rollToHit(action, target);
             let save = target.rollSave(action);
             // Automatic success actions => Example Healing Word {toHit : "None", saveSkill : "None"}
@@ -574,10 +573,11 @@ class Troop
                 if(action.damage == "0") {}
                 else
                 {
-                    let d = this.rollDamage(action)
+                    let d = this.rollDamage(action, sharedDamage)
                     target.hitPoints.current -= d;
                     logs(`${target.name} regains ${-d} hit points.`);
                 }
+                this.dealCondition(action.condition, target);
             }
             else
             {
@@ -585,10 +585,20 @@ class Troop
                 // Automatic success actions with saveDC to reduce Damage => Example Fireball {toHit : "None", saveSkill : "Dexterity"}
                 if(save !== undefined && toHit === undefined)
                 {
-                    d = this.rollDamage(action);
                     if(save === true)
                     {
-                        d = floor(d * 0.5);
+                        if(action.saveCancelsDamage)
+                        {
+                            d = 0;
+                        }
+                        else
+                        {
+                            d = this.rollDamage(action, sharedDamage) * 0.5;
+                        }
+                    }
+                    else
+                    {
+                        d = this.rollDamage(action, sharedDamage);
                     }
                 }
                 // Melee / Ranged , Spell/Weapon Attacks => Example Longsword {toHit : "Strength", saveSkill: "None"}
@@ -596,16 +606,26 @@ class Troop
                 {
                     if(toHit === true)
                     {
-                        d = this.rollDamage(action);
+                        d = this.rollDamage(action, sharedDamage);
                     }
                 }
                 // Roll to Hit action + saveDC to reduce Damage => Example Rogue Sneak Attack for some reason.
                 else
                 {
-                    d = this.rollDamage(action);
                     if(save === true)
                     {
-                        d = floor(d * 0.5);
+                        if(action.saveCancelsDamage)
+                        {
+                            d = 0;
+                        }
+                        else
+                        {
+                            d = floor(this.rollDamage(action, sharedDamage) * 0.5);
+                        }
+                    }
+                    else
+                    {
+                        d = this.rollDamage(action, sharedDamage);
                     }
                 }
                 // We hit the target, apply damage
@@ -618,51 +638,65 @@ class Troop
                         if(action.pool && this.pools[action.pool] !== -1)
                             this.pools[action.pool] --;
                     }
-                    if(target.hasResist(action.damageType)) // Resist
-                    {
-                        d = floor(d/2);
-                        logs(`${target.htmlName} has resistance against ${action.damageType} damage.`);
-                    }
-                    if(target.hasResist(action.damageType, "vulnerability")) // Vulnerability
-                    {
-                        d = d *2;
-                        logs(`${target.htmlName} is vulnerable against ${action.damageType} damage.`);
-                    }
-                    if(target.hasResist(action.damageType, "immunity")) // Vulnerability
-                    {
-                        d = 0;
-                        logs(`${target.htmlName} is immune against ${action.damageType} damage.`);
-                    }
+                    d = this.applyResist(action, target, d);
                     target.hitPoints.current -= d;
                     logs(`${target.htmlName} takes ${d} ${action.damageType} damage`);
+                    this.dealCondition(action.condition, target);
                 }
             }
 
-            if(action.condition)
-            {
-                if(action.condition.charm == "true")
-                {
-                    action.condition.charm = this.isPlayer;
-                }
-                if(!action.condition.save)
-                    action.condition.save = "None";
-
-                let conditionSave = target.rollSave({saveSkill : action.condition.save, saveDC : action.condition.saveDC});
-                if(!conditionSave)
-                {
-                    //logs(`${target.htmlName} now has the condition ${action.condition.name}.`);
-                    if(!target.hasCondition("name", action.condition.name))
-                    {
-                        target.conditions.push(action.condition);
-                        let a = clone(action.condition);
-                        a.save = undefined;
-                        a.duration = -1;
-                        target.applyCondition(a);
-                    }
-                }
-            }
+            
             target.checkHitPoints();
         }
+    }
+
+    dealCondition(condition, target)
+    {
+        if(condition)
+        {
+            if(condition.charm == true)
+            {
+                condition.charm = this.isPlayer;
+            }
+            if(!condition.save)
+                condition.save = "None";
+
+            let conditionSave = target.rollSave({saveSkill : condition.save, saveDC : condition.saveDC});
+            if(!conditionSave)
+            {
+                if(!target.hasCondition("name", condition.name))
+                {
+                    //logs(`${target.htmlName} now has the condition ${action.condition.name}.`);
+                    target.conditions.push(condition);
+
+                    let a = clone(condition);
+                    a.save = undefined;
+                    a.duration = -1;
+                    target.applyCondition(a); // Apply condition rightaway without the save.
+                }
+            }
+        }
+    }
+
+    applyResist(action, target, d)
+    {
+        let damage = d;
+        if(target.hasResist(action.damageType)) // Resist
+        {
+            damage = floor(d/2);
+            logs(`${target.htmlName} has resistance against ${action.damageType} damage.`);
+        }
+        if(target.hasResist(action.damageType, "vulnerability")) // Vulnerability
+        {
+            damage = d *2;
+            logs(`${target.htmlName} is vulnerable against ${action.damageType} damage.`);
+        }
+        if(target.hasResist(action.damageType, "immunity")) // Vulnerability
+        {
+            damage = 0;
+            logs(`${target.htmlName} is immune against ${action.damageType} damage.`);
+        }
+        return damage;
     }
 
     /** Rolls a saving throw an incomming attack or condition
@@ -704,14 +738,13 @@ class Troop
      * @param {Action} : {toHit = the involved ability score}
      * @param {Troop} : target with AC && advantage
      * @returns undefined (toHit == "None") | roll value (AC undefined) | true (roll meets AC) | false (roll doesn't meet AC) */
-    rollToHit(action, target)
+    rollToHit(action, target, damage)
     {
         let roll;
         if(action.toHit !== "None")
         {
-            logs(`${this.htmlName} rolls to Hit for ${action.name}. (1d20 + ${this.abilityScores[action.toHit].bonus + action.toHitExtra}) :`); 
             roll = floor(random() * 20) + 1;
-            logs(`(${roll}) + ${this.abilityScores[action.toHit].bonus + action.toHitExtra} = ${roll + this.abilityScores[action.toHit].bonus + action.toHitExtra}`);
+            logs(`${this.htmlName} rolls to Hit for ${action.name}. (1d20 + ${this.abilityScores[action.toHit].bonus + action.toHitExtra}) = (${roll}) + ${this.abilityScores[action.toHit].bonus + action.toHitExtra} = ${roll + this.abilityScores[action.toHit].bonus + action.toHitExtra}`); 
             roll += this.abilityScores[action.toHit].bonus + action.toHitExtra;
 
             
@@ -798,11 +831,14 @@ class Troop
     /** Rolls for a specific dice type and amount and adds a bonus
      * @param {action} : {damage = the roll , damageAbility = the involved ability score, damageExtra: some extra damage bonus}
      * @returns {Integer} : the roll's result. */
-    rollDamage(action)
+    rollDamage(action, damage)
     {
         let roll = 0;
         let log = `${this.htmlName} rolls damage`
         let neg = false;
+
+        if(damage)
+            return damage;
 
         if(action.damage == "0")
             return 0;

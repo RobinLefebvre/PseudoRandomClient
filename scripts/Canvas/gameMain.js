@@ -179,9 +179,17 @@ function mousePressed(event)
 
                     if(targets.length > 0)
                     {
+                        let damage;
+                        if(targets.length > 1 && troop.actions[actionInput].damage !== 0)
+                        {
+                            damage = troop.rollDamage(troop.actions[actionInput]);
+                        }
                         targets.forEach(id =>
                         {
-                            troop.useAction(actionInput, game.initiativeOrder[id]);
+                            if(damage)
+                                troop.useAction(actionInput, game.initiativeOrder[id], damage);
+                            else
+                                troop.useAction(actionInput, game.initiativeOrder[id]);
                         });
                         // If action has limited uses
                         if( !troop.actions[actionInput].onSuccess)
