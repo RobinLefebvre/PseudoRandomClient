@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-{scpre : 8}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PseudoRandom - Dev Sandbox</title>
+
+    <!-- p5 
+    <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/addons/p5.dom.min.js"></script>-->
+    <!-- local p5-->
+    <script language="javascript" type="text/javascript" src="local dependencies/p5.min.js"></script>
+    <script language="javascript" type="text/javascript" src="local dependencies/p5.dom.min.js"></script>
+
+    <!-- FONTS -- IRRELEVANT IN LOCAL-->
+    <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"rel="stylesheet">
+
+    <!-- Pure CSS 
+    <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous"> -->
+    <!-- Local Pure CSS -->
+    <link rel="stylesheet" href="local dependencies/purecss.css"> 
+
+    <link href="./style/main.css" rel="stylesheet" />
+    <link href="./style/campaign.css" rel="stylesheet" />
+
+</head>
+<body>
+    <div id="navigationTab">
+        <div id="pointsDisplay"> 
+            <p>Currency </p> <p id="goldPoints" class="gold border-right fullSize tCenter"> </p>
+             <p>Renown </p> <p id="renownPoints" class="border-right fullSize tCenter"> </p> 
+             <p>Experience </p> <p id="experiencePoints" class="gold border-right fullSize tCenter"> </p>
+             <p>Activity</p> <p id="activityDisplay"></p>
+        </div>
+
+        <div id="quests"></div>
+
+        <div id="destinations"></div>
+        <div id="temporary"></div>
+    </div>
+    <!-- Interaction Tab is populated by <scipts> with a Scripted Interaction event. -->
+    <div id="interactionTab" style="display:none;">
+        <div id="interactionText">
+            
+        </div>
+        <div id="interactionImage">
+
+        </div>
+        <div id="interactionOptions">
+            <button> Be at ease, resting completely. </button>
+            <button> Keep yourself aware of your surroundings. </button>
+            <button> <b> Skill Check : </b> Construct something to hide your camp. (Intelligence - <b class="red"> Difficult </b> ) </button>
+            <button> <b> Skill Check : </b> Keep looking for a better area. (Wisdom -<b class="orange"> Medium </b> )  </button>
+        </div>
+    </div>
+
+    <div id="scripts">
+        <!-- Camera is the class responsible for drawing most things on the canvas. -->
+        <script src="scripts/Camera.js"> </script>
+        <!-- Troop is the class allowing to roll dices and basically play the game. -->
+        <script src="scripts/Troop.js"> </script>
+        <!-- Util is basically all the shared code, so yeah, it's always gun'be messy there. -->
+        <script src="scripts/util.js"> </script>
+
+        <script>
+let canvas,camera;
+let worldMapSize = 10000 * 100;
+let campaign = CampaignData.getCampaignData();
+campaign.position.x = Number.parseInt(campaign.position.x)
+campaign.position.y = Number.parseInt(campaign.position.y)
+campaign.timestamp = Number.parseInt(campaign.timestamp);
+campaign.points.renown = Number.parseInt(campaign.points.renown);
+campaign.points.experience = Number.parseInt(campaign.points.experience);
+campaign.points.gold = Number.parseInt(campaign.points.gold);
+
+let partySize = 0; 
+let partySpeed = 0;
+
+let visibleQuests = [];
+let visibleDestinations = [];
+
+let selectedQuest = {};
+let selectedDestination = {};
+
+function setup()
+{
+    canvas = createCanvas(windowWidth, windowHeight);
+    camera = new Camera();
+    camera.setMap(worldMapSize);
+    campaign.party.forEach(t => 
+    {
+        partySpeed += Number.parseInt(t.speed) * 2; 
+        partySize += Number.parseInt(t.dimension.x)
+    });
+
+    partySize = createVector(partySize, partySize);
+    createMockWorldMap();
+
+    updateNavigarionPanel();
+    updatePointsPanel();
+
+    let timeSincePlayed = getTimeSince(campaign);
+    if(timeSincePlayed.unit !== "seconds")
+    {
+        gainIdleGold(campaign, timeSincePlayed);
+
+        if(campaign.destination)
+        {
+            moveIdleDistance(campaign, timeSincePlayed);
+        }
+    }
+}
+function createMockWorldMap()
+{
+    let w = (sqrt(3) * worldMapSize);
+    let h = (worldMapSize * 6) / 4;
+    worldMap[0].shape =  camera.getShape(worldMapSize, worldMapSize, worldMapSize, 6, 0, 0);
+    
+    worldMap[1].shape =  camera.getShape( worldMapSize + w / 2, worldMapSize + h, worldMapSize, 6, 0, 0);
+    worldMap[2].shape =  camera.getShape( worldMapSize - w / 2, worldMapSize + h, worldMapSize, 6, 0, 0);
+    worldMap[3].shape =  camera.getShape( worldMapSize + w / 2, worldMapSize - h, worldMapSize, 6, 0, 0);
+    worldMap[4].shape =  camera.getShape( worldMapSize - w / 2, worldMapSize - h, worldMapSize, 6, 0, 0);
+
+    worldMap[5].shape =  camera.getShape(worldMapSize + w, worldMapSize, worldMapSize, 6, 0, 0);
+    worldMap[6].shape =  camera.getShape(worldMapSize - w, worldMapSize, worldMapSize, 6, 0, 0);
+    worldMap[7].shape = camera.getShape( 1500000, 1200000, 20000, 7, 0, 0);
+}
+setInterval(tick, 1000);
+function tick()
+{
+    updatePointsPanel();
+
+    updateNavigarionPanel();
+    let timeSincePlayed = getTimeSince(campaign);
+    if(timeSincePlayed.unit !== "seconds" && (timeSincePlayed.unit !=="minutes" || timeSincePlayed.unit == "minutes" && timeSincePlayed.value > "10") )
+    {
+        gainIdleGold(campaign, timeSincePlayed);
+
+        if(campaign.destination)
+        {
+            moveIdleDistance(campaign, timeSincePlayed);
+        }
+        campaign.timestamp = Date.now();
+    }
+    localStorage.campaign = JSON.stringify(campaign);
+}
+function updatePointsPanel()
+{
+    document.querySelector(`#goldPoints`).innerHTML = `<b> ${getCurrency(campaign.points.gold) } </b>`;
+    document.querySelector(`#renownPoints`).innerHTML = `<b> ${campaign.points.renown } </b>`;
+    document.querySelector(`#experiencePoints`).innerHTML = `<b> ${campaign.points.experience } </b>` ;
+
+    document.querySelector(`#activityDisplay`).innerHTML = `<b> ${getAcitivityHTML()} </b>` ;
+
+}
+function getAcitivityHTML()
+{
+    let a = campaign.activity;
+    if(campaign.state == "Idle")
+    {
+        return `<b> Idle in ${visibleQuests[0].name}`;
+    }
+    if(campaign.state == "Moving" && campaign.destination)
+    {
+        for(let i = 0; i < worldMap.length; i++)
+        {
+            if(intersects(createVector(campaign.destination.x, campaign.destination.y), worldMap[i].shape) )
+            {
+                return `<b> Moving towards ${worldMap[i].name}`
+            }
+        }
+        return `<b> Moving towards (${campaign.destination.x},${campaign.destination.y}) <b>` 
+    }
+}
+function gainIdleGold(campaign, elapsedTime)
+{
+    let gainedGold = floor(elapsedTime.value * elapsedTime.unitValue * 100);
+    gainedGold = gainedGold / 100;
+
+    campaign.points.gold += gainedGold;
+
+    let textValue = getCurrency(gainedGold);
+    displayTemporary(`You haven't played in ${elapsedTime.value} ${elapsedTime.unit}. You gain <b class="gold"> ${textValue} </b>.`, "h2", "", 2500)
+
+    campaign.timestamp = Date.now();
+}
+function moveIdleDistance(campaign, elapsedTime)
+{
+    let start = createVector(campaign.position.x, campaign.position.y);
+    let end = createVector(campaign.destination.x, campaign.destination.y);
+    let sub = end.copy().sub(start).normalize();
+    let distanceTraveled = partySpeed * (elapsedTime.value * elapsedTime.uV);
+    if(distanceTraveled > sub.mag())
+    {
+        campaign.position.x = end.x;
+        campaign.position.y = end.y;
+        campaign.state = "Idle";
+    }
+    else
+    {
+        let moved = sub.setMag(distanceTraveled);
+        campaign.position.x = start.x + moved.x;
+        campaign.position.y = start.y + moved.y;
+    }
+}
+/** TEMPORARY DISPLAYS*/
+function displayTemporary(message, elt, styleClass, time)
+{
+    document.querySelector(`#temporary`).innerHTML = `<${elt} class="${styleClass}"> ${message} </${elt}>`;
+    document.querySelector(`#temporary`).style.display = "grid";
+    setTimeout(() => {document.querySelector(`#temporary`).style.display = "none";}, time);
+}
+/* Quests Panel */
+function updateNavigarionPanel()
+{
+    visibleQuests = updateVisibleQuests();
+    document.querySelector(`#quests`).innerHTML = getVisibleQuestsHTML();
+    visibleDestinations = updateVisibleDestinations();
+    document.querySelector(`#destinations`).innerHTML = getVisibleDestinationsHTML();
+}
+function updateVisibleQuests()
+{
+    let ret = [];
+    let currentPosition = campaign.position;
+    for(let index = 0; index < worldMap.length; index++)
+    {
+        let mapArea = worldMap[index];
+        if(intersects(currentPosition, mapArea.shape))
+        {
+            ret.push({"name" : mapArea.name, "quests" : mapArea.quests}); 
+        }
+    }
+    return ret;
+}
+function getVisibleQuestsHTML()
+{
+    let elt = ``;
+    for(let i = 0; i < visibleQuests.length; i++)
+    {
+        elt += `<div id="area${i}" class="areaQuest"> <h3> Quests in ${visibleQuests[i].name} </h3> <div class="questHolder"> ` 
+        for(let questIndex = 0; questIndex < visibleQuests[i].quests.length; questIndex++)
+        {
+            let quest = visibleQuests[i].quests[questIndex];
+            elt += `<p>${quest.name} </p> <input type="submit" value="Start" /> `;
+        }
+        elt +=  `</div> </div>`
+    }
+    return elt;
+}
+
+/* Destinations Panel */
+function updateVisibleDestinations()
+{
+    let ret = [];
+    let currentPosition =  createVector(campaign.position.x, campaign.position.y);
+    for(let index = 0; index < worldMap.length; index++)
+    {
+        let mapArea = worldMap[index];
+        if(mapArea.isDestination)
+        {
+            let centr = centroid(mapArea);
+            centr = createVector(centr.x, centr.y);
+            let sub = centr.copy().sub( currentPosition );
+            let distance = floor(sub.mag());
+            let movementVector = sub.normalize().setMag(partySpeed);
+            movementVector = { x : floor(movementVector.x), y: floor(movementVector.y) };
+            ret.push({"name" : mapArea.name, "radius" : mapArea.radius, "destination" : centr, "distance" : distance})
+        }
+    }
+    return ret;
+}
+function getVisibleDestinationsHTML()
+{
+    let ds = visibleDestinations;
+    let elt = `<div> <h3> Destinations </h3>`;
+    for(let i = 0; i < ds.length; i++)
+    {
+        let d = ds[i].distance;
+
+        let timeToTravel = floor( (d + partySpeed) / partySpeed )
+        elt += `
+        <div id="destination${i}" class="destinationHolder"> 
+            <p class="destinationP">${ds[i].name} - ${getDistanceUnit(d).value} ${getDistanceUnit(d).unit} - ${timeToTravel} seconds to center.  </p> 
+        </div> </div>` 
+    }
+    return elt;
+}
+
+
+function draw()
+{
+    background(50);
+    if(keyIsDown(32))
+    {
+        campaign.destination = undefined;
+        campaign.state = "Idle";
+    }
+    for(let areaIndex = 0; areaIndex < worldMap.length; areaIndex++)
+    {
+        camera.displayArea(worldMap[areaIndex]);
+    }
+    updateParty();
+
+    camera.displaySimpleOverlay();
+}
+function updateParty()
+{
+    let fr = frameRate();
+    if(fr !== 0 && campaign.destination)
+    {
+        let start = createVector(campaign.position.x, campaign.position.y);
+        let end = createVector(campaign.destination.x, campaign.destination.y);
+        let sub = end.copy().sub(start)
+        let d = sub.mag();
+        sub.setMag( partySpeed / fr );
+
+        let distanceToStop = floor(partySpeed /fr);
+        if(campaign.destination.radius)
+            distanceToStop += campaign.destination.radius;
+        if(d > distanceToStop )
+        {
+            campaign.position.x += floor( sub.x );
+            campaign.position.y += floor( sub.y );
+        }
+    }
+    let entity = {name: campaign.name, position : campaign.position, dimension : partySize};
+    camera.anchor = entity;
+    camera.setMapPosition();
+    camera.displayEntity(entity);
+    camera.displayFocus(entity, true, true);
+}
+function mousePressed(event)
+{
+    if(eventManagement.restrictToCanvas(event) && event.buttons == 1)
+    {
+        let pos = camera.screenPointToMapPoint(mouseX, mouseY);
+        campaign.destination = {x : pos.x, y : pos.y};
+        campaign.state = "Moving";
+    }
+}
+
+function mouseWheel(event)
+{
+    camera.zoom(event);
+}
+
+</script>
+
+<script>
+let worldMap = [
+    {
+        "name" : "Stillwater Plains",
+        "radius" : 1000000,
+        "isDestination" : "true",
+        "coloration" : {levels : [56,102,0,255]},
+        "shape" : [],
+        "quests" : 
+        [
+            {"name" : "Explore the Area."}
+        ],
+    },
+    {
+        "name" : "End Of The World",
+        "radius" : 1000000,
+        "shape" : [],
+        "quests" : 
+        [
+            {"name" : "Congrats."}
+        ],
+    },
+    {
+        "name" : "End Of The World",
+        "radius" : 1000000,
+        "shape" : [],
+        "quests" : 
+        [
+            {"name" : "Congrats."}
+        ],
+    },
+    {
+        "name" : "End Of The World",
+        "radius" : 1000000,
+        "shape" : [],
+        "quests" : 
+        [
+            {"name" : "Congrats."}
+        ],
+    },
+    {
+        "name" : "End Of The World",
+        "radius" : 1000000,
+        "shape" : [],
+        "quests" : 
+        [
+            {"name" : "Congrats."}
+        ],
+    },
+    {
+        "name" : "End Of The World",
+        "radius" : 1000000,
+        "shape" : [],
+        "quests" : 
+        [
+            {"name" : "Congrats."}
+        ],
+    },
+    {
+        "name" : "End Of The World",
+        "shape" : [],
+        "quests" : 
+        [
+            {"name" : "Congrats."}
+        ],
+    },
+    {
+        "name" : "Plain Raider's Camp",
+        "isDestination" : "true",
+        "troops" : [],
+        "radius" : 15000,
+        "shape" : [],
+        "quests" : 
+        [
+            {"name" : "Raid the Camp."},
+            {"name" : "Meet with the Camp's Leader."},
+        ],
+    },
+];
+        </script>
+    </div>
+</body>
+
+</html>

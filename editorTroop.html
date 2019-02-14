@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>PseudoRandom - Troop</title>
+    <title>PseudoRandom - Troop Editor </title>
 
     <!-- p5 
     <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
@@ -23,14 +23,15 @@
     <link rel="stylesheet" href="local dependencies/purecss.css"> 
     
     <link href="./style/main.css" rel="stylesheet" />
+    <link href="./style/editorTroop.css" rel="stylesheet" />
 </head>
 
 <body>
     <header>
-        <h4 class="headerItem" onclick="window.location.href = `./index.html`" >TRPG - Prototype</h4>
-        <p class="headerItem" onclick="window.location.href = `./editorEncounter.html`">Encounter Editor</p>
-        <p class="headerItem" onclick="window.location.href = `./editorTroop.html`">Troop Editor</p>
-        <p class="headerItem" onclick="window.location.href = `./game.html`">Game</p>
+        <h4 class="headerItem" onclick="window.location.href = `${SERVER}index.html`" >PseudoRandom</h4>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}editorEncounter.html`">Encounter Editor</p>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}editorTroop.html`">Troop Editor</p>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}game.html`">Game</p>
     </header>
     <div id="page_content" >
         <div id="troopCreationMenu"> 
@@ -56,11 +57,11 @@
 
             <!-- ROW 5 -->
             <p> Map Size (centimeter radius)  : </p> <input type="number" id="radius" value="50"/> 
-            <p> Fluff Size : </p> <select id="size"><option value="Medium">Medium </option><option value="Tiny">Tiny </option><option value="Small">Small </option><option value="Medium">Medium </option><option value="Large">Large </option><option value="Huge">Huge </option><option value="Gargantuan">Gargantuan </option></select> 
+            <p> Fluff Size : </p> <select id="size"><option value="Tiny">Tiny </option><option value="Small">Small </option><option value="Medium">Medium </option><option value="Large">Large </option><option value="Huge">Huge </option><option value="Gargantuan">Gargantuan </option></select> 
             
             <!-- ROW 6 -->
             <p> Troop Type : </p> <input type="text" id="type" value="humanoïd"/> 
-            <textarea style="grid-column:3/-1; grid-row:6/8;" rows="4" cols="50" id="description"> You can enter your troop's visual and gameplay description here. </textarea>
+            <p style="grid-column:3/-1; grid-row:6/8;"> </p>
 
             <!-- ROW 7 -->
             <p style="grid-row : 7/8; grid-column:1/-1;"></p>
@@ -78,14 +79,14 @@
             <!-- ROW 11 -->
             <p style="grid-row : 11/12; grid-column:1/-1;"> </p>
 
-            <!-- ROW 11 -->
+            <!-- ROW 12 -->
             <p> Actions Per Turn : </p> <input  id="actionsPerTurn" type="number" value="1"/>
             <p> Turns Per Round : </p> <input  id="turnsAmount" type="number" value="1"/>
 
-            <!-- ROW 12 -->
+            <!-- ROW 13 -->
             <p style="grid-row : 13/14; grid-column:1/-1;"></p>
 
-            <!-- ROW 13 -->
+            <!-- ROW 14 -->
             <table style=" border-bottom : 1px solid rgb(250,180,60); margin-bottom : 2rem;">
                 <tr style="height: 4rem; border-top:1px solid rgb(250,180,60);">
                     <th><b>Ability</b></th>

@@ -1,0 +1,130 @@
+
+#temporary
+{
+    display:none;
+    grid-column : 7 / 19;
+    grid-row : 4/5;
+    background-color:rgba(0,0,0,0.9);
+
+    border:1px solid rgb(250,180,60);
+    border-radius:2rem;
+	grid-template-columns:  1fr; grid-template-rows: 1fr;
+    padding-left : 0.5rem; padding-right : 0.5rem;
+}
+.inputP
+{
+    padding:0; cursor:pointer; border-radius:2rem; border:1px solid rgb(250,180,60); text-align:center;
+}
+.destinationP
+{
+    padding:0; font-size:1.1rem; text-align: justify;
+}
+#interactionTab
+{
+    display: none;
+}
+/** Navigation Tab => Quests & Destinations */
+#navigationTab
+{
+	grid-column : 1 / -1;
+    grid-row : 1 / -1;
+    display: grid;
+	grid-template-columns: repeat(24, 1fr);
+    grid-template-rows:  repeat(24, 1fr);
+    color:rgb(200,200,200);
+}
+/* LEFT-SIDE PANEL for Navigation*/
+#quests
+{
+    grid-column:1/6; grid-row:3/21; 
+    background-color:rgba(0,0,0,0.8); 
+    border-top-right-radius:2rem; border-bottom-right-radius:2rem;
+    padding:0.5rem;
+    overflow: auto;
+}
+.areaQuest
+{
+    border-bottom:1px solid rgb(250,180,60);
+}
+.questHolder
+{
+    display:grid;
+    grid-template-columns: 7fr 1fr;
+}
+/* RIGHT-SIDE PANEL for Navigation*/
+#destinations
+{
+    grid-column:20/-1; grid-row:3/21; 
+    background-color:rgba(0,0,0,0.8); 
+    border-top-left-radius:2rem; border-bottom-left-radius:2rem;
+    padding:0.5rem;
+    overflow: auto;
+}
+
+.destinationHolder
+{
+    display:grid;
+    grid-template-columns: 1fr;
+}
+/** TOP MENU FOR DISPLAYING POINTS */
+#pointsDisplay
+{
+    grid-column : 7 / 19;
+    grid-row : 1;
+    background-color:rgba(0,0,0,0.9);
+
+    border-bottom-left-radius:2rem; border-bottom-right-radius:2rem;
+    display:grid;
+    
+	grid-template-columns: repeat(6, 1fr) 1fr 3fr;
+    grid-template-rows: 1fr;
+    grid-gap : 0.5rem;
+    padding-left : 0.5rem;
+    padding-right : 0.5rem;
+}
+
+/** INTERACTIONS */
+#interactionTab
+{
+    grid-column: 5/20; 
+    grid-row:5/20;
+    display:grid;
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows : 1fr 8fr 3fr;
+    cursor : default; 
+    background-color:rgba(0,0,0,0.7); 
+    border: 1px solid rgb(240,180,60); 
+    border-top-left-radius : 2rem; 
+    border-top-right-radius : 2rem; 
+    padding-left:0.5rem; 
+}
+
+#interactionTab #interactionText
+{
+    grid-column: 1/2; 
+    grid-row: 1/3;
+    font-size: 1.2rem;
+}
+
+
+#interactionTab #interactionImage
+{
+    grid-column: 2/-1; 
+    grid-row:1/-1;
+}
+
+#interactionTab #interactionOptions
+{
+
+    grid-column: 1/2; 
+    grid-row: 3/-1;
+}
+
+#interactionTab button
+{
+    width:100%;
+    text-align:left;
+    border:none;
+    outline:none;
+    font-size: 1.2rem;
+}

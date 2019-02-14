@@ -185,17 +185,22 @@ class Camera
     }
 
     /** Returns an array of points for a polygon on the map */
-    getShape(x, y, radius, pointsAmount, randomize )
+    getShape(x, y, radius, pointsAmount, randomize, noiseValue, startingRotation)
     {
         let shape = [];
-        for(var i = -(PI/pointsAmount); i < TWO_PI - 2 * (PI/pointsAmount); i += TWO_PI / pointsAmount)
+        let r = 0;
+        if(startingRotation)
+            r = startingRotation
+
+        for(var i = -(PI/pointsAmount) + r; i < TWO_PI - ((PI/pointsAmount) * 2) + r; i += TWO_PI / pointsAmount)
         {
-            let n = noise(frameCount / 50, x + y + radius + i); // Selecting a random noise point
+            let n = (noiseValue === undefined) ? noise(frameCount / 50, x + y + radius + i) : noise(frameCount / 50, noiseValue.x + noiseValue.y + radius + i)
+            
             let r = map(n, 0, 1, -radius*randomize, radius * randomize); // Mapping that noise point to Radius according to the random factor
             let v = 
             {
-                x :  Math.floor( x + (radius + r) * sin(i) ),
-                y:   Math.floor( y + (radius + r) * cos(i) )
+                x :  Math.floor( x + (radius + r) * cos(i) ),
+                y:   Math.floor( y + (radius + r) * sin(i) )
             }
             shape.push(v)
         }
@@ -280,7 +285,7 @@ class Camera
             }
 
             let str = entity.stk || color(250, 250, 250, 150);
-            strokeWeight(2);
+            strokeWeight(3);
             stroke(str);
 
             let c = entity.coloration || color(0, 0, 0, 150);
@@ -309,52 +314,64 @@ class Camera
         {
             ct = color(area.coloration.levels[0], area.coloration.levels[1], area.coloration.levels[2], area.coloration.levels[3])
         }
-
         let c = ct || color(0,0,0,150);
         fill(c);
+
+        if(area.animatedColor)
+        {
+            if(frameCount % area.animatedColor == 0)
+            {
+                area.nextColor = color(random(255), random(255), random(255), area.coloration.levels[3])
+            }
+            else if (area.nextColor)
+            {
+                area.coloration = lerpColor(area.coloration, area.nextColor, (frameCount % area.animatedColor / area.animatedColor) / 100 );
+            }
+        }
+        if(area.randomWalk && area.noise)
+        {
+            area.position.x += floor( map( floor(noise(frameCount / 50, area.noise.x) * area.randomWalk), 0, area.randomWalk -1, -area.randomWalk+1, area.randomWalk ) )
+            area.position.y += floor( map( floor(noise(frameCount / 50, area.noise.y) * area.randomWalk), 0, area.randomWalk-1, -area.randomWalk+1, area.randomWalk ) )
+            area.shape = camera.getShape(area.position.x, area.position.y, area.radius, area.pointsAmount, area.randomize, area.noise);
+        }
+        else if(area.animated)
+        {
+            //area.shape = camera.getShape(area.position.x, area.position.y, area.radius, area.pointsAmount, area.randomize);
+        }
 
         if(area.shape)
         {
             // Compute centroid
             let shapeCentroid = this.centroid(area);
-            let a = createVector(shapeCentroid.x, shapeCentroid.y).dist( createVector(area.shape[0].x, area.shape[0].y) )
             shapeCentroid = this.mapPointToScreenPoint(shapeCentroid.x, shapeCentroid.y);
             shapeCentroid = createVector(shapeCentroid.x, shapeCentroid.y);
 
-            // If the shape is big enough AF 
-            if(this.mapDimensionsToScreen(a, a).x > 2 )
+            // Display and compute average distance between centeroid and points (in pixels)
+            let size = 0;
+            beginShape();
+            area.shape.forEach(point =>
             {
-                // Display and compute average distance between centeroid and points (in pixels)
-                let size = 0;
-                beginShape();
-                area.shape.forEach(point =>
-                {
-                    let p = this.mapPointToScreenPoint(point.x,point.y);
-                    let d = shapeCentroid.copy().dist( createVector(p.x, p.y) );
-                    size += d;
-                    vertex(p.x, p.y);
-                })
-                endShape();
-                size = floor(size / area.shape.length );
+                let p = this.mapPointToScreenPoint(point.x,point.y);
+                let d = shapeCentroid.copy().dist( createVector(p.x, p.y) );
+                size += d;
+                vertex(p.x, p.y);
+            })
+            endShape();
+            size = floor(size / area.shape.length );
 
-                // If the name exists and the shape size is between boundaries, display the name
-                if(area.name && size > 30)
+            // If the name exists and the shape size is between boundaries, display the name
+            if(area.name && size > 30)
+            {
+                if(size <= 60)
                 {
-                    if(size <= 60)
-                    {
-                        this.displayText(shapeCentroid, size / 4, area.name)
-                    }
-                    else if(size > 50)
-                    {
-                        this.displayText(shapeCentroid, 15, area.name)
-                    }
+                    this.displayText(shapeCentroid, size / 4, area.name)
+                }
+                else if(size > 50)
+                {
+                    this.displayText(shapeCentroid, 14, area.name)
                 }
             }
-            else
-            {
-                let dim = this.mapDimensionsToScreen(a, a)
-                rect(shapeCentroid.x, shapeCentroid.y, dim.x, dim.y);
-            }
+            
             // Return the pixel position of the shape's centroid, because why not.
             return [shapeCentroid.x, shapeCentroid.y];
         }
@@ -387,7 +404,7 @@ class Camera
      * @param {*} entity : possibly a Troop
      * @param {boolean} name : flag to add name display;
     */
-    displayFocus(entity, name)
+    displayFocus(entity, name, ignoreSize)
     {
         let pos = this.mapPointToScreenPoint(entity.position.x, entity.position.y);
         let dim = this.mapDimensionsToScreen(entity.dimension.x + 10, entity.dimension.y + 10);
@@ -411,7 +428,12 @@ class Camera
                 text = entity.name;
             
             // Display according to the dimension of the Entity on the screen
-            if(dim.x > 10)
+            if(ignoreSize)
+            {
+                pos.y += dim.y + 16;
+                this.displayText(pos, 16, text)
+            }
+            else if(dim.x > 10)
             {
                 if(dim.x <= 45)
                 {
@@ -437,6 +459,7 @@ class Camera
         text(`${message}`, screenPos.x, screenPos.y);
         textAlign(LEFT);
     }
+
     displayMeasure(start, units)
     {
         let mousePos = this.screenPointToMapPoint(mouseX, mouseY);
@@ -522,10 +545,6 @@ class Camera
             for(let i = 0; i < game.areas.length; i++)
             {
                 let area = game.areas[i];
-                if(area.animated)
-                {
-                    area.shape = this.getShape(area.position.x, area.position.y, area.radius, area.pointsAmount, area.randomize);
-                }
                 this.displayArea(area);
             }
         }
@@ -540,6 +559,43 @@ class Camera
         this.setMapPosition();
     }
 
+    displaySimpleOverlay()
+    {
+        let pos = createVector(this.mapPosition.x, this.mapPosition.y);
+        let dim;
+        if(this.anchor && this.anchor.dimension)
+            dim = this.anchor.dimension.copy();
+        else 
+            dim = createVector(0,0);
+                    
+        noFill();
+        strokeWeight(1);
+
+        for(var i = 0; i <= 10; i++)
+        {
+            let exp = Math.pow(10,i);
+            let max = this.mapDimensionsToScreen((9 * exp) + dim.x, (9 * exp )+ dim.y) ;
+            let mapMax = floor(map(max.y, 0, windowHeight * 5, 10, 25));
+            stroke(0,0,0,mapMax * 10);
+            for(var a = 1; a <= 9; a++)
+            {
+                let da = this.mapDimensionsToScreen((a * exp) + dim.x, (a * exp)+ dim.y) ;
+                let pp = this.mapPointToScreenPoint(pos.x, pos.y);
+                
+                let unit = "";
+                if(a * exp >= 100 && a * exp < 100000)
+                    unit = "" + (a * exp) / 100 + " m."
+                else if(a * exp >= 100000)
+                    unit = "" + (a * exp) / 100000 + " km. "
+
+                if(max.y > 100)
+                {
+                    ellipse(pp.x, pp.y, da.x, da.y);
+                    text(unit,  pp.x - (2 + (i * 4)), pp.y - (da.x) )
+                }
+            }
+        }
+    }
     /** Displays a set of circles showing distances from the center of the screen */
     displayTacticalOverlay()
     {

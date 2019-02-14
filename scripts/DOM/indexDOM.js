@@ -63,11 +63,11 @@ function writeContentList()
         sourceContent.style.display = "none";
         for(let key in localData[source])
         {
-            if(key !== "isActive")
+            if(key !== "isActive" && localData[source][key].length > 0)
             {
                 let keyName = document.createElement("div");
                 keyName.innerHTML = `${key.toUpperCase()} (${localData[source][key].length})`;
-                keyName.style = "cursor: pointer; padding : 0.6rem; padding-left: 2rem; "
+                keyName.style = "cursor: pointer; padding : 0.6rem; padding-left: 2rem;"
                 keyName.addEventListener('click', (event) =>
                 {
                     let target = document.querySelector(`#${source.replace(/\s+/, "")}${key}`);
@@ -85,14 +85,25 @@ function writeContentList()
                 // FOR EACH ELEMENT
                 let keyContent = document.createElement("div");
                 keyContent.id = `${source.replace(/\s+/, "")}${key}`;
+                keyContent.style.display = "none"
                 let cpt = 0;
                 localData[source][key].forEach(element =>
                 {
+                    let desc = ``;
+                    if(key == "actions")
+                    {
+                        desc = new Action(element).describe();
+                    }
+                    if(key == "conditions")
+                    {
+                        desc = new Condition(element).describe();
+                    }
                     let elementName = document.createElement("div");
+                    let time = `Created : ${getTimeSince(element).value} ${getTimeSince(element).unit} ago.`;
                     elementName.innerHTML = 
                         `<input type="submit" value="Delete" style="margin-right:2.5rem;" onclick='deleteFromStorage("${source}", "${key}", ${cpt}); writeContentList();' /> 
-                        ${element.name} `;
-                    elementName.style = "cursor: default; padding : 0.25rem; padding-left: 7rem;"
+                        ${element.name}${time} <br/> ${desc} `;
+                    elementName.style = "cursor: default; padding : 0.25rem; padding-left: 7rem; border-bottom:1px solid rgb(250,180,60); border-bottom-left-radius : 10rem;";
 
                     keyContent.append(elementName);
                     cpt++;

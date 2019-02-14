@@ -1,4 +1,17 @@
-html { height : 100%; font-family: 'Oswald', sans-serif; }
+html { height : 100%; font-family: 'Oswald', sans-serif; font-size : 14px; }
+
+.red{ color : rgb(170,20,20); }
+.orange{color : rgb(170, 135, 20);}
+.green{color : rgb(20,170,20);}
+.gold{color: rgb(250,180,60)}
+
+.border-left{border-left:1px solid rgb(250,180,60);}
+.border-right{border-right:1px solid rgb(250,180,60);}
+.tRight {text-align:right;}
+.tCenter {text-align:center;}
+
+.fullSize {width:100%; height:100; display:block;}
+
 /**Invisible body scripts*/
 #scripts{ display : none; }
 
@@ -31,6 +44,7 @@ header
     border-left : 1px solid rgb(250, 180, 60);
     border-right : 1px solid rgb(250, 180, 60);
 }
+h3{font-size : 1.3rem; text-decoration : underline;}
 /** Content => Grid(24,24) */
 #page_content
 {
@@ -41,160 +55,6 @@ header
     grid-template-rows:  repeat(24, 1fr);
     color:rgb(200,200,200);
 }
-
-/* Troop Editor page**/
-
-/* Tabs containing the form */
-#troopCreation, #actionEdit
-{
-    overflow: auto;
-    grid-column:3/22;
-    grid-row: 2/-1;
-    grid-column-gap: 1%;
-    padding : 0.5rem;
-    
-    background-color: rgba(0,0,0,0.5);
-    color:rgb(200,200,200);
-
-    display:grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(20, 1fr);
-
-    border-top-left-radius: 2rem;
-    border-top-right-radius: 2rem;
-
-    border: 2px solid black;
-}
-/* Menu to switch between tabs */
-#troopCreationMenu
-{
-    padding-top:0.5rem; 
-    background-color:rgba(0,0,0,0.75); 
-    grid-column: 22/23; 
-    grid-row:3/6; 
-    border-radius: 1rem; 
-    border-top-left-radius:0rem; 
-    border-bottom-left-radius:0rem;
-    border-left:1px solid rgb(240,180,60);
-}
-/* TABLES */
-#troopCreation table, #actionEdit table
-{
-    table-layout: fixed;
-    grid-column : 1/-1;
-    width:90%;
-    margin-left : 5%;
-    border : 1px solid rgb(250, 180, 60);
-    text-align : center;
-}
-/* Inputs within tables */
-#troopCreation table input, #troopCreation table select, #actionEdit table input, #actionEdit table select, #troopCreation table p
-{
-    margin-right:0;
-    width: 90%;
-    padding:0;
-    border:none;
-    text-align : center;
-}
-/* Ability Score Inputs */
-#troopCreation table input.asinput
-{ 
-    width:2rem;
-    text-align : right;
-    background-color:rgba(0,0,0,0.5);
-    padding:0.5rem;
-    border : none; 
-}
-
-
-/** Encounters page */
-#encountersToggles
-{
-    grid-column : 1/-1;
-    grid-row : 16/17;
-    padding-left : 0.5rem;
-}
-#encountersToggles button
-{
-    height : 100%;
-    width: 18%;
-    background-color: rgba(0,0,0,0.5);
-    color: rgb(200,200,200);
-    border-top-left-radius: 2rem;
-    border-top-right-radius: 2rem;
-    
-    border : 1px solid rgb(250, 180, 60);
-}
-
-.saveEncounter{cursor : pointer; height: 90%; width:90%; color:rgb(200,200,200); text-align:center; font-size:1.5rem;}
-
-#encountersContent
-{
-    grid-column : 1/-1;
-    grid-row: 17/-1;
-    overflow:auto;
-    display:grid;
-	grid-template-columns: repeat(4, 1fr) 2fr;
-	grid-template-rows: 1fr;
-
-    background-color: rgb(50,50,50);
-    color: rgb(200,200,200);
-    border-top : 1px solid rgb(250, 180, 60);
-    padding:1rem;
-}
-#explanations1, #explanations2
-{
-    line-height: 1.2rem ;
-    text-align:justify;
-}
-#areaData
-{
-    overflow:hidden;
-}
-#areaHolder
-{
-    grid-column : 1/-1;
-}
-#encountersContent > div
-{
-    display : none;
-    grid-column : 1/-1;
-    grid-row : 1/-1;
-
-	grid-template-columns: repeat(4, 1fr) 2fr;
-    grid-template-rows: 1fr;
-}
-#encountersContent > #groupsData
-{
-    display : none;
-    grid-column : 1/-1;
-    grid-row : 1/-1;
-
-	grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: 1fr;
-    grid-gap : 1rem;
-}
-/** INDEX page */
-#contentFileInput
-{
-    background-color : rgb(50,50,50);
-	grid-column : 1/-1;
-    grid-row :  1;
-
-    padding : 0.5rem;
-    border-bottom : solid 1px rgb(250, 180, 60);
-}
-#contentList
-{
-    background-color : rgb(50,50,50);
-	grid-column : 1/-1;
-    grid-row :  2/-1;
-
-    padding : 0.5rem;
-    border-top : solid 1px rgb(50,50,50);
-}
-
-/* GLOBAL */
 textarea
 {
     border-radius : 0.25rem;
@@ -257,23 +117,3 @@ input[type=range]::-webkit-slider-runnable-track {
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {background: rgb(250, 180, 60);}
 
-@media screen and (min-width: 200px) and (max-width: 1024px) 
-{
-    html 
-    {
-        font-size : 10px;
-    }
-    #troopCreation, #actionEdit
-    {
-        grid-column:2/23;
-    }
-    #page_content
-    {
-        grid-template-rows: repeat(16, 1fr);
-    }
-    #troopCreationMenu
-    {
-        grid-column:23/24;
-        grid-row:3/5;
-    }
-}

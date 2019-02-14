@@ -7,14 +7,18 @@
  function displayEdit()
  {
      let ret = `<option value=""> --- </option>`;
-     let d = LocalData.getAllEncounters();
- 
+     let d = LocalData.get("encounters", "All");
+     let d2 = LocalData.get("maps", "All");
      for(let i = 0; i < d.length; i++)
      {
-         enc = d[i];
-         ret += `<option value="${i}" > ${enc.name} </option>`; 
+        let enc = d[i];
+        ret += `<option value="encounter${i}" > ${enc.name} </option>`; 
      }
-     
+     for(let i = 0; i < d2.length; i++)
+     {
+        let enc = d2[i];
+        ret += `<option value="map${i}" > ${enc.name} </option>`; 
+     }
      document.querySelector(`#edit`).innerHTML = ret;
  }
  
@@ -157,11 +161,11 @@
              troopSelect.id = `troop${group}_${ind}`;
              let troopOption = `<option value="${t.name}"> ${t.name} </option>`;
 
-             LocalData.getAllTroops().forEach(troop => 
+             let troopsStorage = LocalData.get("troops", "All")
+             if(troopsStorage.length > 0)
              {
-                 if(troop.name != t.name)
-                    troopOption += `<option value="${troop.name}"> ${troop.name} </option>`;
-             });
+                troopsStorage.forEach(troop => { if(troop.name != t.name) { troopOption += `<option value="${troop.name}"> ${troop.name} </option>`; }  });
+             }
  
              
              troopSelect.innerHTML = `<select id="name${group}_${ind}" onchange="editTroop(${group}, ${ind})"> ${troopOption} </select>`;
@@ -175,6 +179,7 @@
          }
      }
  }
+
 function writeTroopActionSelect(group, id)
 {
     let elt = `<select id="troopActionSelect${group}_${id}" >  <option value="None"> ----- </option><option value="Move"> Movement </option>`;
@@ -217,43 +222,47 @@ function writeTroopActionSelect(group, id)
 /** Writes a given area onto the DOM  */
 function writeArea(id, area)
 {
-    let elt = document.querySelector("#areaHolder");
-    let n = document.createElement("div");
-    let name = area.name || ``;
-    let col = rgbToHex(area.coloration.levels[0], area.coloration.levels[1], area.coloration.levels[2]);
-    let pos = createVector(area.position.x / 100, area.position.y / 100);
-    let radius = area.radius;
-    let pointsAmount = area.pointsAmount;
-    let randomize = area.randomize;
-    let obstacle = (area.isObstacle) ? `checked` : ``;
-    let animated = (area.animated) ? `checked` : ``;
-    let alpha = 255-area.coloration.levels[3];
+    if(! area.noWrite)
+    {
 
-    n.id = id;
-    n.innerHTML = `<div id="areaData${n.id}" style="cursor: pointer; border-bottom: 1px solid rgb(250,180,60);" >
-                        <input id="areaName${n.id}" onmouseover='writeExplanation("areaName", 2);' type="text" placeholder="Enter Area Name..." value="${name}" style="margin-right:2rem;" onchange="areas[${n.id}].name = this.value;" /> ${id}
-                        <input id="areaCol${n.id}"  onmouseover='writeExplanation("areaColor", 2);' type="color" onchange="areas[${n.id}].coloration = color(this.value);" value="${col}" style="margin-right:2rem; width:2rem;" /> 
-                        Transparency : <input id="areaAlpha${n.id}" style="margin-right:2rem;" onmouseover='writeExplanation("areaAlpha", 2);' type="range" step=1 min=0 max=255 value="${alpha}" onchange="areas[${n.id}].coloration.levels[3] = 255 - parseInt(this.value); " />
-                        Center : ( X =  <input style="width:2rem;" id="areaPosX${n.id}" type="number"  value="${pos.x}"  onchange="areas[${n.id}].position.x = Number.parseFloat(this.value * 100); redrawArea(${n.id});"  onmouseover='writeExplanation("areaPos", 2);' />
-                        , Y = <input style="width:2rem;" id="areaPosY${n.id}" type="number" value="${pos.y}" onchange="areas[${n.id}].position.y = Number.parseFloat(this.value * 100); redrawArea(${n.id});"  onmouseover='writeExplanation("areaPos", 2);' /> )
-                        <input style="width: 5rem; margin-left: 2rem;" id="${n.id}" type="submit" value="Clone" onclick="addArea(${n.id})"  onmouseover='writeExplanation("areaClone", 2);' />
-                        <input style="width: 5rem; margin-left: 2rem;" type="submit" value="Delete" onclick="deleteArea(${n.id});"  onmouseover='writeExplanation("areaDelete", 2);' /><br/>
-                        <input type="submit" value="See Polygon" style="width: 8rem;" onclick="toggleAreaHolder(${n.id})" onmouseover='writeExplanation("areaSeePoints", 2);'/> 
-                        Animate : <input type="checkbox" id="areaAnimate${n.id}" onchange="areas[${id}].animated = this.checked;" ${animated} /> 
-                        Obstacle : <input type="checkbox" id="areaObstacle${n.id}" onchange="areas[${id}].isObstacle = this.checked;" ${obstacle} /> 
-                    </div>
-                    <div id="areaH${n.id}" style="display:none; background-color:rgba(0,0,0,0.5); border-bottom: 1px solid rgb(250,180,60);"">
-                        Points <input style="width:2rem; margin-right:2rem;" id="areaPointsAmount${n.id}" type="number" value=${pointsAmount} onchange="areas[${n.id}].pointsAmount = this.value; redrawArea(${n.id})" onmouseover='writeExplanation("areaPoints", 2);' />  
-                        Radius <input id="areaSize${n.id}" type="number" value=${radius / 100} onchange="areas[${n.id}].radius = this.value * 100; redrawArea(${n.id})"  style="margin-right:2rem;" onmouseover='writeExplanation("areaRadius", 2);' />
-                        Randomness <input style="width:2rem;" id="areaRandom${n.id}" type="number" value=${randomize} onchange="areas[${n.id}].randomize = this.value; redrawArea(${n.id})" onmouseover='writeExplanation("areaRandom", 2);' style="margin-right:2rem;" /> 
-                        <input id="${n.id}" type="submit" value="Add Point" onclick="addPointToShape(${n.id});" style="margin-left:1rem; margin-right:2rem;" onmouseover='writeExplanation("areaRedraw", 2);'  /> 
-                        <input id="${n.id}" type="submit" value="Redraw Polygon" onclick="redrawArea(${n.id});" style="margin-left:1rem; margin-right:2rem;" onmouseover='writeExplanation("areaRedraw", 2);'  /> 
-                        <input id="${n.id}" type="submit" value="Subdivide Polygon" onclick="subdivide(${n.id},1, {identifySub: true});" style="margin-left:1rem; margin-right:2rem;" onmouseover='writeExplanation("areaRedraw", 2);'  /> 
-
-                        ${writePointsHTML(n.id, area.shape)}
-
-                    </div>`; 
-    elt.append(n);
+        let elt = document.querySelector("#areaHolder");
+        let n = document.createElement("div");
+        let name = area.name || ``;
+        let col = rgbToHex(area.coloration.levels[0], area.coloration.levels[1], area.coloration.levels[2]);
+        let pos = createVector(area.position.x / 100, area.position.y / 100);
+        let radius = area.radius;
+        let pointsAmount = area.pointsAmount;
+        let randomize = area.randomize;
+        let obstacle = (area.isObstacle) ? `checked` : ``;
+        let animated = (area.animated) ? `checked` : ``;
+        let alpha = 255-area.coloration.levels[3];
+    
+        n.id = id;
+        n.innerHTML = `<div id="areaData${n.id}" style="cursor: pointer; border-bottom: 1px solid rgb(250,180,60);" >
+                            <input id="areaName${n.id}" onmouseover='writeExplanation("areaName", 2);' type="text" placeholder="Enter Area Name..." value="${name}" style="margin-right:2rem;" onchange="areas[${n.id}].name = this.value;" /> ${id}
+                            <input id="areaCol${n.id}"  onmouseover='writeExplanation("areaColor", 2);' type="color" onchange="areas[${n.id}].coloration = color(this.value);" value="${col}" style="margin-right:2rem; width:2rem;" /> 
+                            Transparency : <input id="areaAlpha${n.id}" style="margin-right:2rem;" onmouseover='writeExplanation("areaAlpha", 2);' type="range" step=1 min=0 max=255 value="${alpha}" onchange="areas[${n.id}].coloration.levels[3] = 255 - parseInt(this.value); " />
+                            Center : ( X =  <input style="width:2rem;" id="areaPosX${n.id}" type="number"  value="${pos.x}"  onchange="areas[${n.id}].position.x = Number.parseFloat(this.value * 100); redrawArea(${n.id});"  onmouseover='writeExplanation("areaPos", 2);' />
+                            , Y = <input style="width:2rem;" id="areaPosY${n.id}" type="number" value="${pos.y}" onchange="areas[${n.id}].position.y = Number.parseFloat(this.value * 100); redrawArea(${n.id});"  onmouseover='writeExplanation("areaPos", 2);' /> )
+                            <input style="width: 5rem; margin-left: 2rem;" id="${n.id}" type="submit" value="Clone" onclick="addArea(${n.id})"  onmouseover='writeExplanation("areaClone", 2);' />
+                            <input style="width: 5rem; margin-left: 2rem;" type="submit" value="Delete" onclick="deleteArea(${n.id});"  onmouseover='writeExplanation("areaDelete", 2);' /><br/>
+                            <input type="submit" value="See Polygon" style="width: 8rem;" onclick="toggleAreaHolder(${n.id})" onmouseover='writeExplanation("areaSeePoints", 2);'/> 
+                            Animate : <input type="checkbox" id="areaAnimate${n.id}" onchange="areas[${id}].animated = this.checked;" ${animated} /> 
+                            Obstacle : <input type="checkbox" id="areaObstacle${n.id}" onchange="areas[${id}].isObstacle = this.checked;" ${obstacle} /> 
+                        </div>
+                        <div id="areaH${n.id}" style="display:none; background-color:rgba(0,0,0,0.5); border-bottom: 1px solid rgb(250,180,60);"">
+                            Points <input style="width:2rem; margin-right:2rem;" id="areaPointsAmount${n.id}" type="number" value=${pointsAmount} onchange="areas[${n.id}].pointsAmount = this.value; redrawArea(${n.id})" onmouseover='writeExplanation("areaPoints", 2);' />  
+                            Radius <input id="areaSize${n.id}" type="number" value=${radius / 100} onchange="areas[${n.id}].radius = this.value * 100; redrawArea(${n.id})"  style="margin-right:2rem;" onmouseover='writeExplanation("areaRadius", 2);' />
+                            Randomness <input style="width:2rem;" id="areaRandom${n.id}" type="number" value=${randomize} onchange="areas[${n.id}].randomize = this.value; redrawArea(${n.id})" onmouseover='writeExplanation("areaRandom", 2);' style="margin-right:2rem;" /> 
+                            <input id="${n.id}" type="submit" value="Add Point" onclick="addPointToShape(${n.id});" style="margin-left:1rem; margin-right:2rem;" onmouseover='writeExplanation("areaRedraw", 2);'  /> 
+                            <input id="${n.id}" type="submit" value="Redraw Polygon" onclick="redrawArea(${n.id});" style="margin-left:1rem; margin-right:2rem;" onmouseover='writeExplanation("areaRedraw", 2);'  /> 
+                            <input id="${n.id}" type="submit" value="Subdivide Polygon" onclick="subdivide(${n.id},1, {identifySub: true});" style="margin-left:1rem; margin-right:2rem;" onmouseover='writeExplanation("areaRedraw", 2);'  /> 
+    
+                            ${writePointsHTML(n.id, area.shape)}
+    
+                        </div>`; 
+        elt.append(n);
+    }
 }
 
 /** Writes a row for each of the points in a given shape */

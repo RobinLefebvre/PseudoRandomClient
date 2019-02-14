@@ -117,13 +117,15 @@ function nextTurn()
     writeTroop(game.initiativeOrder[game.currentIndex]);
 }
 // Functions pushing the message onto the Game's gamelog.
-function logs(message)
+function logs(message, flag)
 {
     if(!game.gameLog)
         game.gameLog = [];
-    
-    game.gameLog.push(message);
-    writeGameLogs();
+    if(!flag)
+    {
+        game.gameLog.push(message);
+        writeGameLogs();
+    }
 }
 
 // Using mouse drag to move with right click.
@@ -160,7 +162,7 @@ function mousePressed(event)
             let mouseMap = camera.screenPointToMapPoint(mouseX, mouseY);
             mouseMap = createVector(mouseMap.x, mouseMap.y);
 
-            // Movement
+            // Movement => Check if we collide with an obstacle => Should be reworked so that we can't go through an obstacles *as easily*
             if(actionInput == undefined)
             {
                 let troopDistance = floor(mouseMap.copy().dist( createVector(troop.position.x, troop.position.y) ));
@@ -169,50 +171,130 @@ function mousePressed(event)
                 {
                     troop.move(mouseMap);
                 }
-            } // Use action if we have some left
-            else if(troop.hasTakenAction < troop.actionsPerTurn)
+            } 
+            // Use the selected action (if we have some left)
+            else if(troop.actionsTaken < troop.actionsPerTurn)
             {
+                // Get the action from the index
                 let act = game.initiativeOrder[game.currentIndex].actions[actionInput];
-                if(act.uses != 0 )
+
+                // Get the targets for tha action at the position of the click (should be reworked to take in the Mouse Position)
+                let targets = getAffectedTroops(troop, act, game.initiativeOrder);
+                if(targets.length > 0)
                 {
-                    let targets = getAffectedTroops(troop, act, game.initiativeOrder);
-
-                    if(targets.length > 0)
+                    // We have an array of targets. If there are more than 1 then roll for shared damage.
+                    let damage;
+                    if(targets.length > 1 && troop.actions[actionInput].damage !== "0")
                     {
-                        let damage;
-                        if(targets.length > 1 && troop.actions[actionInput].damage !== 0)
-                        {
-                            damage = troop.rollDamage(troop.actions[actionInput]);
-                        }
-                        targets.forEach(id =>
-                        {
-                            if(damage)
-                                troop.useAction(actionInput, game.initiativeOrder[id], damage);
-                            else
-                                troop.useAction(actionInput, game.initiativeOrder[id]);
-                        });
-                        // If action has limited uses
-                        if( !troop.actions[actionInput].onSuccess)
-                        {
-                            if(troop.actions[actionInput].uses !== -1)
-                                troop.actions[actionInput].uses -= 1;
-                            if(troop.actions[actionInput].pool)
-                                troop.pools[troop.actions[actionInput].pool] -= 1;
-                        }
-                        
-                        troop.hasTakenAction ++;
-
-                        // Update the DOM, see the <script> element in game.html.
-                        writeGameOrder();
-                        writeTroop(game.initiativeOrder[game.currentIndex]);
-                        actionInput = undefined;
+                        damage = troop.rollDamage(troop.actions[actionInput]);
                     }
+
+                    targets.forEach(id =>
+                    {
+                        troop.useAction(actionInput, game.initiativeOrder[id], damage);
+                    });
+                    // If action has limited uses and doesn't need to hit for reducing => Reduce the uses
+                    if( !troop.actions[actionInput].onSuccess)
+                    {
+                        if(troop.actions[actionInput].uses !== -1)
+                            troop.actions[actionInput].uses -= 1;
+                        if(troop.actions[actionInput].pool && troop.actions[actionInput].expandsPool)
+                            troop.pools[troop.actions[actionInput].pool] -= 1;
+                    }
+                    
+                    troop.actionsTaken ++;
+                    troop.actions[actionInput].hasBeenUsed = true;
+
+                    // Update the DOM, see the <script> element in game.html.
+                    writeGameOrder();
+                    writeTroop(game.initiativeOrder[game.currentIndex]);
+                    actionInput = undefined;
                 }
             }
         }
     }
 }
 
+/** Returns the Array of troops that are targeted by an action at a given time. This should be like the Camera's work... I guess. */
+function getAffectedTroops(troop, action, otherTroops, flag)
+{
+    let ret = [];
+    if(!flag)
+    {
+        let mouseMapPos = camera.screenPointToMapPoint(mouseX, mouseY);
+        mouseMapPos = createVector(mouseMapPos.x, mouseMapPos.y);
+        
+        let d = mouseMapPos.dist(createVector(troop.position.x, troop.position.y))
+        // The mouse is hovering within Action's reach
+        if(d < action.reach + troop.dimension.x )
+        {
+            for(let i = 0; i < otherTroops.length; i++) 
+            {
+                let t = otherTroops[i];
+                let d = mouseMapPos.dist(createVector(t.position.x, t.position.y));
+                // If the troop is within the area of effect
+                if(d < action.areaEffect + t.dimension.x)
+                {
+                    let isAffected = true;
+                    switch(action.target)
+                    {
+                        case "Enemy" :
+                            isAffected = (t.isPlayer != troop.isPlayer);
+                            break;
+
+                        case "Ally" :
+                            isAffected = (t.isPlayer == troop.isPlayer);
+                            break;
+
+                        case "Self" :
+                            isAffected = (t.position.x == troop.position.x && t.position.y == troop.position.y)
+                    }
+                    if(t.hasCondition("name", "Unconcious") && action.target !== "Ally" && !action.targetsUnconcious )
+                    {
+                        isAffected = false;
+                    }
+                    if(isAffected)
+                    {
+                        ret.push(i);
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        let v = createVector(troop.position.x, troop.position.y);
+        for(let i = 0; i < otherTroops.length; i++) 
+        {
+            let t = otherTroops[i];
+            let d = v.dist(createVector(t.position.x, t.position.y));
+            // If the troop is within the area of effect
+            if(d < action.areaEffect + t.dimension.x)
+            {
+                let isAffected = true;
+                switch(action.target)
+                {
+                    case "Enemy" :
+                        isAffected = (t.isPlayer != troop.isPlayer);
+                        break;
+
+                    case "Ally" :
+                        isAffected = (t.isPlayer == troop.isPlayer);
+                        break;
+
+                    case "Self" :
+                        isAffected = (t.position.x == troop.position.x && t.position.y == troop.position.y)
+                }
+
+                if(isAffected)
+                {
+                    ret.push(i);
+                }
+            }
+        }
+    }  
+    return ret;
+}
 // Sets the current player according to the <select> html element in the page.
 function switchPlayer(name)
 {
@@ -231,7 +313,10 @@ function switchPlayer(name)
     // Update the DOM, see the <script> element in game.html.
     writeGameOrder(); 
     writeTroop(game.initiativeOrder[game.currentIndex]);
-    toggleTab(`game`);
-    toggleTab(`logs`);
+    toggleTab(`game`, "none");
+    toggleTab(`logs`, "block");
+    toggleTab(`troop`, "grid");
+    toggleTab(`turn`, "block");
+
 
 }

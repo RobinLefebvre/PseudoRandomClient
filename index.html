@@ -26,25 +26,31 @@ Now, only God knows. -->
     <link rel="stylesheet" href="local dependencies/purecss.css"> 
     
     <link href="./style/main.css" rel="stylesheet" />
+    <link href="./style/index.css" rel="stylesheet" />
+
 </head>
 
 <body>
     <header>
-        <h4 class="headerItem" onclick="window.location.href = `./index.html`" >TRPG - Prototype</h4>
-        <p class="headerItem" onclick="window.location.href = `./editorEncounter.html`">Encounter Editor</p>
-        <p class="headerItem" onclick="window.location.href = `./editorTroop.html`">Troop Editor</p>
-        <p class="headerItem" onclick="window.location.href = `./game.html`">Game</p>
+        <h4 class="headerItem" onclick="window.location.href = `${SERVER}index.html`" >PseudoRandom</h4>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}editorEncounter.html`">Encounter Editor</p>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}editorTroop.html`">Troop Editor</p>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}game.html`">Game</p>
     </header>
     <!-- Page Content -->
     <div id="page_content">
         <!--Input File contains a File Input for custom content-->
         <div id='contentFileInput' style="padding-left : 2rem;" >
-            <h2 style="color:rgb(200,200,200);"> Content Input </h2>
+            <h2> Content Input </h2>
             <input type="file" name="file" onchange="LocalData.storeToLocal(this.files);" style="background-color : rgba(0,0,0,0.5); height : 2rem; margin:1rem;" />
         </div>
+
         <!--Content list is the holder for DOM elements created by <scripts> -->
         <div id='contentList' style="padding : 2rem; padding-bottom: -2rem; overflow:scroll;"> 
-            <h2 style="color:rgb(200,200,200);"> Content List <input type="submit" value="Export Active" style="background-color : rgba(0,0,0,0.5); border:none; margin-left : 3rem; width: 6rem;" onclick="LocalData.exportActiveToJSON();" /> <input type="submit" value="Export All" style="background-color : rgb(50,50,50); width:6rem;" onclick="LocalData.exportToJSON();" /> </h2>
+            <h2> Content List 
+                <input type="submit" value="Export Active" style="" onclick="LocalData.exportActiveToJSON();" /> 
+                <input type="submit" value="Export All" style="background-color : rgb(50,50,50); width:6rem;" onclick="LocalData.exportToJSON();" /> 
+            </h2>
             <div class="sources" style="border-radius : 1rem;"> </div>
         </div>
     </div>
@@ -53,6 +59,8 @@ Now, only God knows. -->
     <div id="scripts">
         <!-- UTIL contains the LocalData static class and other functions and objects. -->
         <script src="scripts/util.js"> </script>
+        <script src="scripts/Troop.js"> </script>
+
         <!-- Content Load and Display -->
         <script src="scripts/DOM/indexDOM.js"> </script>
     </div>

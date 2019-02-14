@@ -1,0 +1,23 @@
+/** INDEX page */
+#contentFileInput
+{
+    background-color : rgb(50,50,50);
+	grid-column : 1/-1;
+    grid-row :  1;
+
+    padding : 0.5rem;
+    border-bottom : solid 1px rgb(250, 180, 60);
+
+    color:rgb(200,200,200);
+}
+#contentList
+{
+    background-color : rgb(50,50,50);
+	grid-column : 1/-1;
+    grid-row :  2/-1;
+
+    padding : 0.5rem;
+    border-top : solid 1px rgb(50,50,50);
+
+    color:rgb(200,200,200);
+}

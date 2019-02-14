@@ -1,6 +1,7 @@
 let actionsAmount = 0;
 let traitsAmount = 0;
 let poolsAmount = 0;
+let troopData = LocalData.get("troops", "All");
 
 function setup()
 {
@@ -18,7 +19,7 @@ function sendData()
         data = LocalData.getLocalStorage();
     }
     t.type = document.querySelector("#type").value;
-    t.radius = document.querySelector("#radius").value;
+    t.dimension = {x :document.querySelector("#radius").value, y : document.querySelector("#radius").value};
     t.size = document.querySelector("#size").value;
     t.armorClass = document.querySelector("#armorClass").value;
     t.hitPoints = {
@@ -127,57 +128,55 @@ function sendData()
         }
     }
     
-    LocalData.addTroop(t.source, t);
+    LocalData.add(t.source, "troops", t);
 }
-function writeTroop(troop)
+function writeTroop(troopIndex)
 {
-    let data = LocalData.getAllTroops();
     actionsAmount = 0;
-    data.forEach(t => 
-    {
-        if(t.name == troop)
-        {
-            document.querySelector("#name").value = t.name;
-            document.querySelector("#type").value = t.type;
-            document.querySelector("#radius").value = t.radius;
-            document.querySelector("#size").value = t.size;
-            document.querySelector("#armorClass").value = t.armorClass;
-            document.querySelector("#hpamount").value = t.hitPoints.dieAmount,
-            document.querySelector("#hptype").value = t.hitPoints.dieType,
-            document.querySelector("#hpBonus").value = t.hitPoints.bonus;
+    let t = troopData[troopIndex];
+    document.querySelector("#name").value = t.name;
+    document.querySelector("#type").value = t.type;
 
-            for(let score in t.abilityScores)
-            {
-                document.querySelector(`#${score}Score`).value = t.abilityScores[score].score;
-                document.querySelector(`#${score}Bonus`).value = t.abilityScores[score].bonus;
-            }
-            document.querySelector("#speed").value = floor(t.speed / 100); 
-            document.querySelector("#actionsPerTurn").value = t.actionsPerTurn;        
-            document.querySelector("#turnsAmount").value = t.turnsAmount;                     
-    
-            if(t.pools)
-            {
-                let i = 0;
-                for(let p in t.pools)
-                {
-                    addPool({name : p, points : t.pools[p]})
-                    i++;
-                }
-                poolsAmount = i;
-            }
-            if(t.actions)
-            {
-                t.actions.forEach(a => {addAction(a);});
-                actionsAmount = t.actions.length;
-            }
-            if(t.conditions)
-            {
-                t.conditions.forEach(t => addTrait(t));
-                traitsAmount= t.conditions.length;
-            }
-            return t;
+    if(t.radius)
+        document.querySelector("#radius").value = t.radius;
+    if(t.dimension)
+        document.querySelector("#radius").value = t.dimension.x;
+    document.querySelector("#size").value = t.size;
+    document.querySelector("#armorClass").value = t.armorClass;
+    document.querySelector("#hpamount").value = t.hitPoints.dieAmount,
+    document.querySelector("#hptype").value = t.hitPoints.dieType,
+    document.querySelector("#hpBonus").value = t.hitPoints.bonus;
+
+    for(let score in t.abilityScores)
+    {
+        document.querySelector(`#${score}Score`).value = t.abilityScores[score].score;
+        document.querySelector(`#${score}Bonus`).value = t.abilityScores[score].bonus;
+    }
+    document.querySelector("#speed").value = floor(t.speed / 100); 
+    document.querySelector("#actionsPerTurn").value = t.actionsPerTurn;        
+    document.querySelector("#turnsAmount").value = t.turnsAmount;                     
+
+    if(t.pools)
+    {
+        let i = 0;
+        for(let p in t.pools)
+        {
+            addPool({name : p, points : t.pools[p]})
+            i++;
         }
-    })
+        poolsAmount = i;
+    }
+    if(t.actions)
+    {
+        t.actions.forEach(a => {addAction(a);});
+        actionsAmount = t.actions.length;
+    }
+    if(t.conditions)
+    {
+        t.conditions.forEach(t => addTrait(t));
+        traitsAmount= t.conditions.length;
+    }
+    return t;
 }
 
 function writeAbilityScore()
@@ -359,14 +358,14 @@ function toggleTroopTab(id)
 function writeEdit()
 {
     let elt = document.querySelector("#edit");
-    let data = LocalData.getAllTroops();
-    data.forEach(troop =>
+    for(let i = 0; i < troopData.length; i++)
     {
+        let troop = troopData[i];
         let e = document.createElement("option");
-        e.value = troop.name;
+        e.value = i;
         e.innerHTML = troop.name;
         elt.append(e);
-    })
+    }
 }
 function writeConditionSelect(value)
 {
