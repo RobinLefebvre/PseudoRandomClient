@@ -99,7 +99,9 @@ function writeContentList()
                         desc = new Condition(element).describe();
                     }
                     let elementName = document.createElement("div");
-                    let time = `Created : ${getTimeSince(element).value} ${getTimeSince(element).unit} ago.`;
+                    let time = ``;
+                    if(element.timestamp)
+                        time = ` Created : ${getTimeSince(element).value} ${getTimeSince(element).unit} ago.`;
                     elementName.innerHTML = 
                         `<input type="submit" value="Delete" style="margin-right:2.5rem;" onclick='deleteFromStorage("${source}", "${key}", ${cpt}); writeContentList();' /> 
                         ${element.name}${time} <br/> ${desc} `;

@@ -33,6 +33,7 @@ function draw()
     if(game.state)
     {
         camera.displayGame(game); // Will display every troop and area in the game object
+        // I realize there is only one state here. But AI thinking and Animation display will come here.
         switch(game.state)
         {
             case "Game":
@@ -43,7 +44,7 @@ function draw()
                     // If we don't have an action selected
                     if(actionInput == undefined)
                     {
-                        if(hoverDash)
+                        if(hoverDash) // Dash has a special hovering display
                         {
                             let t = {};
                             t.position = currentTroop.position;
@@ -52,8 +53,9 @@ function draw()
                             t.stk = currentTroop.stk;
                             camera.displayMovement(t)
                         }
-                        camera.displayMovement(currentTroop, game.initiativeOrder, game.areas);
+                        camera.displayMovement(currentTroop, game.initiativeOrder, game.areas); // Display Movement of the troop
                     }
+                    // We did select an action in the Troop menu
                     else
                     {
                         let act = game.initiativeOrder[game.currentIndex].actions[actionInput];
@@ -65,13 +67,13 @@ function draw()
     }
 
     
-    // ALT button pressed => Display Tactical overlay
+    // ALT button pressed => Display Tactical overlay - Could use some improvement / rework.
     if(keyIsDown(ALT))
     {
         camera.displayTacticalOverlay();
     }
 
-    // CTRL button pressed => Display measurement tool overlay
+    // CTRL button pressed => Display measurement between a point and your mouse position
     if(measureStart)
     {
         let measureUnit = {value : 100, name: "m"};
@@ -81,7 +83,7 @@ function draw()
         }
         camera.displayMeasure(measureStart,measureUnit);
     }
-    if(!keyIsDown(CONTROL)) // Otherwise stop drawing
+    if(!keyIsDown(CONTROL)) // Stop drawing the measurement if we released CTRL
     {
         measureStart = undefined;
     }
@@ -144,7 +146,7 @@ function mouseDragged(event)
     }
 }
 
-// Clicking
+// Clicking. Yeah... I know. It's scary. But let's go through it together.
 function mousePressed(event) 
 {
     if(eventManagement.restrictToCanvas(event))
@@ -155,14 +157,14 @@ function mousePressed(event)
         {
             measureStart = camera.screenPointToMapPoint(mouseX, mouseY);
         }
-        // If we Left Click during the game and it's our turn.
+        // If we Left Click during the game AND it's our turn, we Good.
         else if(event.buttons == 1 && game.state == "Game" && playerName == game.initiativeOrder[game.currentIndex].isPlayer)
         {
             let troop = game.initiativeOrder[game.currentIndex];
             let mouseMap = camera.screenPointToMapPoint(mouseX, mouseY);
             mouseMap = createVector(mouseMap.x, mouseMap.y);
 
-            // Movement => Check if we collide with an obstacle => Should be reworked so that we can't go through an obstacles *as easily*
+            // Activate Movement => Check if we collide with an obstacle => Should be reworked so that we can't go through an obstacles *as easily*
             if(actionInput == undefined)
             {
                 let troopDistance = floor(mouseMap.copy().dist( createVector(troop.position.x, troop.position.y) ));

@@ -31,7 +31,7 @@
         <div id="pointsDisplay"> 
             <p>Currency </p> <p id="goldPoints" class="gold border-right fullSize tCenter"> </p>
              <p>Renown </p> <p id="renownPoints" class="border-right fullSize tCenter"> </p> 
-             <p>Experience </p> <p id="experiencePoints" class="gold border-right fullSize tCenter"> </p>
+             <p>Experience </p> <p id="experiencePoints" class="white border-right fullSize tCenter"> </p>
              <p>Activity</p> <p id="activityDisplay"></p>
         </div>
 
@@ -43,16 +43,10 @@
     <!-- Interaction Tab is populated by <scipts> with a Scripted Interaction event. -->
     <div id="interactionTab" style="display:none;">
         <div id="interactionText">
-            
         </div>
         <div id="interactionImage">
-
         </div>
         <div id="interactionOptions">
-            <button> Be at ease, resting completely. </button>
-            <button> Keep yourself aware of your surroundings. </button>
-            <button> <b> Skill Check : </b> Construct something to hide your camp. (Intelligence - <b class="red"> Difficult </b> ) </button>
-            <button> <b> Skill Check : </b> Keep looking for a better area. (Wisdom -<b class="orange"> Medium </b> )  </button>
         </div>
     </div>
 
@@ -74,6 +68,11 @@ campaign.timestamp = Number.parseInt(campaign.timestamp);
 campaign.points.renown = Number.parseInt(campaign.points.renown);
 campaign.points.experience = Number.parseInt(campaign.points.experience);
 campaign.points.gold = Number.parseInt(campaign.points.gold);
+if(campaign.timestamp == 1550119700000)
+{
+    campaign.timestamp = Date.now();
+    localStorage.campaign = campaign;
+}
 
 let partySize = 0; 
 let partySpeed = 0;
@@ -102,15 +101,13 @@ function setup()
     updatePointsPanel();
 
     let timeSincePlayed = getTimeSince(campaign);
-    if(timeSincePlayed.unit !== "seconds")
+    gainIdleGold(campaign, timeSincePlayed);
+    campaign.timestamp = Date.now();
+    if(campaign.destination)
     {
-        gainIdleGold(campaign, timeSincePlayed);
-
-        if(campaign.destination)
-        {
-            moveIdleDistance(campaign, timeSincePlayed);
-        }
+        moveIdleDistance(campaign, timeSincePlayed);
     }
+    localStorage.campaign = JSON.stringify(campaign);
 }
 function createMockWorldMap()
 {
@@ -134,7 +131,7 @@ function tick()
 
     updateNavigarionPanel();
     let timeSincePlayed = getTimeSince(campaign);
-    if(timeSincePlayed.unit !== "seconds" && (timeSincePlayed.unit !=="minutes" || timeSincePlayed.unit == "minutes" && timeSincePlayed.value > "10") )
+    if(timeSincePlayed.unit !== "seconds" && (timeSincePlayed.unit !=="minutes" || timeSincePlayed.unit == "minutes" && timeSincePlayed.value > "5") )
     {
         gainIdleGold(campaign, timeSincePlayed);
 
@@ -142,8 +139,8 @@ function tick()
         {
             moveIdleDistance(campaign, timeSincePlayed);
         }
-        campaign.timestamp = Date.now();
     }
+    campaign.timestamp = Date.now();
     localStorage.campaign = JSON.stringify(campaign);
 }
 function updatePointsPanel()
@@ -183,14 +180,12 @@ function gainIdleGold(campaign, elapsedTime)
 
     let textValue = getCurrency(gainedGold);
     displayTemporary(`You haven't played in ${elapsedTime.value} ${elapsedTime.unit}. You gain <b class="gold"> ${textValue} </b>.`, "h2", "", 2500)
-
-    campaign.timestamp = Date.now();
 }
 function moveIdleDistance(campaign, elapsedTime)
 {
     let start = createVector(campaign.position.x, campaign.position.y);
     let end = createVector(campaign.destination.x, campaign.destination.y);
-    let sub = end.copy().sub(start).normalize();
+    let sub = end.copy().sub(start);
     let distanceTraveled = partySpeed * (elapsedTime.value * elapsedTime.uV);
     if(distanceTraveled > sub.mag())
     {
@@ -217,8 +212,8 @@ function updateNavigarionPanel()
 {
     visibleQuests = updateVisibleQuests();
     document.querySelector(`#quests`).innerHTML = getVisibleQuestsHTML();
-    visibleDestinations = updateVisibleDestinations();
-    document.querySelector(`#destinations`).innerHTML = getVisibleDestinationsHTML();
+    visibleDestinations = updateDestinations();
+    document.querySelector(`#destinations`).innerHTML = getDestinationsHTML();
 }
 function updateVisibleQuests()
 {
@@ -251,7 +246,7 @@ function getVisibleQuestsHTML()
 }
 
 /* Destinations Panel */
-function updateVisibleDestinations()
+function updateDestinations()
 {
     let ret = [];
     let currentPosition =  createVector(campaign.position.x, campaign.position.y);
@@ -263,23 +258,23 @@ function updateVisibleDestinations()
             let centr = centroid(mapArea);
             centr = createVector(centr.x, centr.y);
             let sub = centr.copy().sub( currentPosition );
-            let distance = floor(sub.mag());
+            let distance = sub.mag();
             let movementVector = sub.normalize().setMag(partySpeed);
             movementVector = { x : floor(movementVector.x), y: floor(movementVector.y) };
-            ret.push({"name" : mapArea.name, "radius" : mapArea.radius, "destination" : centr, "distance" : distance})
+            ret.push({"name" : mapArea.name, "radius" : mapArea.radius, "destination" : centr, "distance" : floor(distance) })
         }
     }
     return ret;
 }
-function getVisibleDestinationsHTML()
+function getDestinationsHTML()
 {
     let ds = visibleDestinations;
     let elt = `<div> <h3> Destinations </h3>`;
     for(let i = 0; i < ds.length; i++)
     {
         let d = ds[i].distance;
-
-        let timeToTravel = floor( (d + partySpeed) / partySpeed )
+        console.log(d);
+        let timeToTravel = floor( (d + partySpeed) *6 / partySpeed )
         elt += `
         <div id="destination${i}" class="destinationHolder"> 
             <p class="destinationP">${ds[i].name} - ${getDistanceUnit(d).value} ${getDistanceUnit(d).unit} - ${timeToTravel} seconds to center.  </p> 
@@ -314,7 +309,7 @@ function updateParty()
         let end = createVector(campaign.destination.x, campaign.destination.y);
         let sub = end.copy().sub(start)
         let d = sub.mag();
-        sub.setMag( partySpeed / fr );
+        sub.setMag( partySpeed / (fr * 6) );
 
         let distanceToStop = floor(partySpeed /fr);
         if(campaign.destination.radius)
@@ -323,6 +318,11 @@ function updateParty()
         {
             campaign.position.x += floor( sub.x );
             campaign.position.y += floor( sub.y );
+        }
+        else
+        {
+            campaign.destination = undefined;
+            campaign.state = "Idle";
         }
     }
     let entity = {name: campaign.name, position : campaign.position, dimension : partySize};

@@ -404,7 +404,7 @@ class Camera
      * @param {*} entity : possibly a Troop
      * @param {boolean} name : flag to add name display;
     */
-    displayFocus(entity, name, ignoreSize)
+    displayFocus(entity, name, ignoreSize, replaceName)
     {
         let pos = this.mapPointToScreenPoint(entity.position.x, entity.position.y);
         let dim = this.mapDimensionsToScreen(entity.dimension.x + 10, entity.dimension.y + 10);
@@ -431,7 +431,10 @@ class Camera
             if(ignoreSize)
             {
                 pos.y += dim.y + 16;
-                this.displayText(pos, 16, text)
+                if(replaceName)
+                    this.displayText(pos, 16, replaceName)
+                else
+                    this.displayText(pos, 16, text)
             }
             else if(dim.x > 10)
             {
@@ -574,7 +577,7 @@ class Camera
         for(var i = 0; i <= 10; i++)
         {
             let exp = Math.pow(10,i);
-            let max = this.mapDimensionsToScreen((9 * exp) + dim.x, (9 * exp )+ dim.y) ;
+            let max = this.mapDimensionsToScreen( exp + dim.x, exp + dim.y) ;
             let mapMax = floor(map(max.y, 0, windowHeight * 5, 10, 25));
             stroke(0,0,0,mapMax * 10);
             for(var a = 1; a <= 9; a++)
@@ -588,7 +591,7 @@ class Camera
                 else if(a * exp >= 100000)
                     unit = "" + (a * exp) / 100000 + " km. "
 
-                if(max.y > 100)
+                if(max.y * 10 > 100)
                 {
                     ellipse(pp.x, pp.y, da.x, da.y);
                     text(unit,  pp.x - (2 + (i * 4)), pp.y - (da.x) )

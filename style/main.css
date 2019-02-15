@@ -4,6 +4,7 @@ html { height : 100%; font-family: 'Oswald', sans-serif; font-size : 14px; }
 .orange{color : rgb(170, 135, 20);}
 .green{color : rgb(20,170,20);}
 .gold{color: rgb(250,180,60)}
+.white{color: rgb(255,255,255)}
 
 .border-left{border-left:1px solid rgb(250,180,60);}
 .border-right{border-right:1px solid rgb(250,180,60);}

@@ -381,19 +381,20 @@ function isLeft(P0, P1, P2)
 }
 function getDistanceUnit(clickDistance)
 {
-    clickDistance = abs(clickDistance);
-    if(clickDistance > 100)
+    let ret = {};
+    if(clickDistance > 100 && clickDistance < 100000)
     {
-        return {"unit" : "meters", "value" : floor(clickDistance / 100) }
+        ret = {"unit" : "m", "value" : floor(clickDistance / 100) }
     }
-    if(clickDistance > 100000)
+    else if(clickDistance >= 100000)
     {
-        return {"unit" : "kilometers", "value" : floor(clickDistance / 100000) }
+        ret = {"unit" : "km", "value" : floor(clickDistance / 100000) }
     }
     else
     {
-        return {"unit" : "clicks" , "value" : clickDistance}
+        ret = {"unit" : "clicks" , "value" : clickDistance}
     }
+    return ret;
 }
 function getCurrency(goldStandard)
 {
@@ -419,22 +420,22 @@ function getTimeSince(object)
         if(time / 60000 < 1)
         {
             time = round(time / 1000);
-            return {"value" :  time, "unit" : "seconds", "unitValue" : 0.01, "uV" : 1, "obj" : object.timestamp}
+            return {"value" :  time, "unit" : "seconds", "unitValue" : 0, "uV" : 1, "obj" : object.timestamp}
         }
         else if(time / (60000 * 60) < 1)
         {
             time = round(time / 60000);
-            return {"value" :  time, "unit" : "minutes", "unitValue" : 0.6 , "uV" : 60, "obj" : object.timestamp}
+            return {"value" :  time, "unit" : "minutes", "unitValue" : 0.01 , "uV" : 60, "obj" : object.timestamp}
         }
         else if (time / (60000 * 60 * 24) < 1)
         {
             time = round(time / (60000 * 60) );
-            return {"value" :  time, "unit" : "hours" , "unitValue" : (0.6 * 60), "uV" : 60*60}
+            return {"value" :  time, "unit" : "hours" , "unitValue" : 0.6, "uV" : 60*60}
         }
         else
         {
             time = round(time / (60000 * 60 * 24) );
-            return {"value" : time, "unit" : "days", "unitValue" : (0.6 * 60 * 24) , "uV" : 24*60*60}
+            return {"value" : time, "unit" : "days", "unitValue" : (0.6 * 24) , "uV" : 24*60*60}
         }
     }
     return time;
@@ -463,10 +464,10 @@ function toggleTab(id, state)
 
 const CAMPAIGN_DATA = 
 {
-    "name" : "Nobs",
-    "position" : { "x" : "55000", "y" : "55000"},
+    "name" : "Your Group",
+    "position" : { "x" : "1250000", "y" : "1250000"},
     "state" : "Idle",
-    "startedTime" :1550119800000,
+    "startedTime" : 1550119700000,
     "timestamp" : 1550119700000,
     "points" : 
     {
@@ -509,6 +510,7 @@ const DEFAULT_DATA =
         "encounters" : 
         [
             {
+                "timestamp": 1550187999727,
                 "areas": [
                     {
                         "name": "",
@@ -1775,6 +1777,7 @@ const DEFAULT_DATA =
         "troops" : 
         [
             {
+                "timestamp" : 1550187999727,
                 "name": "Barga",
                 "source": "Default",
                 "type": "humanoïd (Bugbear)",

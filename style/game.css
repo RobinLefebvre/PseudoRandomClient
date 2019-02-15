@@ -21,12 +21,11 @@
 #gameTab
 {
     grid-column: 23/-1; 
-    grid-row:7/14; 
+    grid-row:18/-1; 
 
     cursor : default; 
     background-color:rgba(0,0,0,0.3); 
     border-top-left-radius:1rem; 
-    border-bottom-left-radius:1rem; 
 
     border:1px solid rgb(240,180,60);
 }
@@ -97,11 +96,11 @@
     cursor : default; 
     font-size : 1rem; 
     line-height : 1.1rem; 
-    background-color:rgba(0,0,0,0.7); 
+    background-color:rgba(0,0,0,0.7);
     border: 1px solid rgb(240,180,60); 
     border-top-left-radius : 2rem; 
     border-top-right-radius : 2rem; 
-    padding-left:0.5rem; 
+    padding-left:0.5rem;
     grid-column: 7/18; 
     grid-row:18/22; 
     display:none;
