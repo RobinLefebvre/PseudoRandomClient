@@ -11,6 +11,9 @@ Local Code for the PseudoRandom project. https://pseudorandom.glitch.me/
  * There should be no need for an internet connection to have this running ( Google Fonts won't work, bo-hoo )
 
 #### Controls
+##### Campaign Control
+* Left Click - Head towards.
+* Space Bar - Stop moving.
 ##### Camera Control
 * Mouse Wheel:Zoom in/out
 * Drag - Right Click:Move the camera around.
@@ -36,3 +39,5 @@ Local Code for the PseudoRandom project. https://pseudorandom.glitch.me/
 * ESC: Cancel Action selected
 * Left Click with action: Use the action
 * Left Click without action: Move to location.
+
+
