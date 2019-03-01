@@ -32,6 +32,7 @@
         <p class="headerItem" onclick="window.location.href = `${SERVER}editorEncounter.html`">Encounter Editor</p>
         <p class="headerItem" onclick="window.location.href = `${SERVER}editorTroop.html`">Troop Editor</p>
         <p class="headerItem" onclick="window.location.href = `${SERVER}game.html`">Game</p>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}campaignStart.html`">Campaign</p>
     </header>
     <div id="page_content">
         <div id='encountersToggles'>
@@ -41,7 +42,7 @@
             <button id='areas' onclick='menuToggle(this.id);'> Areas </button>
             <button id='save' style="margin-left:27%;"onclick='menuToggle(this.id);'> Save </button>
         </div>
-
+ 
         <div id="encountersContent" style="background-color:rgba(0,0,0,0.5);">
             <div id="mapData" style="display:grid;">
                 <div style="grid-column : 1/3; border-right: 1px solid rgb(250, 180, 60); padding-left: 1rem; margin-top:auto;margin-bottom:auto;">
@@ -70,6 +71,10 @@
                             <tr onmouseover='writeExplanation("gridDisplay", 1);'>
                                 <th><input type="checkbox" id="gridDisplay" checked /></th>
                                 <th><input type="number" id="gridSize" value="150" onchange="gridSize = Number.parseInt(this.value);" onmouseover='writeExplanation("gridDisplay", 1);' />   </th>
+                            </tr>
+                            
+                            <tr onmouseover='writeExplanation("gridSnap", 1);'>
+                                <th><input type="number" id="gridSnap" value="150" onchange="gridSnap = Number.parseInt(this.value);" onmouseover='writeExplanation("gridSnap", 1);' />   </th>
                             </tr>
                         </tbody>
                     </table>

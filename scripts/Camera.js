@@ -2,19 +2,22 @@ class Camera
 {
     constructor(anchor)
     {
-        ellipseMode(RADIUS);
-        // Boundaries in zoom  (clicksPerScreen) and position (clicksPerMap)
+        ellipseMode(RADIUS); // Call the p5.js function, insuring that all the ellipses we draw are correctly setup. 
+        /** Disable Context Menu  : Just so we can drag the Camera around*/
+        document.oncontextmenu = function(event){if(event.preventDefault != undefined){event.preventDefault();}if(event.stopPropagation != undefined){event.stopPropagation();};}
+
+        // Boundaries in zoom  (clicksPerScreen) and position (clicksPerMap). Generally speaking, this defines a default "map" that the camera displays.
         this.zoomBoundaries = {min : 100, max : 8000}
         this.mapBoundaries = {min : 0, max : 4000}
 
         // Gives the amount of clicks (cm.) to be displayed at startup.
         this.displayedClicks = floor(this.zoomBoundaries.max / 2.5);
 
-        // camera is anchored to an entity with a position on the map (expressed in x - y click from 0 to mapSize)
+        // camera can be anchored to a object with a position on the map (expressed in x - y click from 0 to mapBoundaries). 
         this.anchor = anchor || {position : {x: round(this.mapBoundaries.max / 2), y:round(this.mapBoundaries.max / 2)}};
-        this.mapPosition = this.anchor.position;
+        this.mapPosition = this.anchor.position; // mapPosition *can* be independant from the anchor
 
-        // Compute other attributes 
+        // Compute other attributes.  
         this.setScreenCenterPoint();
         this.setScreenSize();
         this.setMapDimensions();
@@ -55,12 +58,25 @@ class Camera
         this.setClicksPerPixel();
     }
 
+    /** Sets this.displayedClicks and calls the zoom adapting functions in order to change the zoom
+     * @param {*} clicks : The amount of clicks (map units) we want to display on the screen's smallest dimension */
+    setZoom(clicks)
+    {
+        this.displayedClicks = clicks;
+        this.setMapDimensions();
+        this.setClicksPerPixel();
+
+        if(this.zoomBoundaries.max < clicks)
+            this.zoomBoundaries.max = clicks;
+    }
+
     /** Sets this.mapPosition vector according to the center of the mapBoundaries*/
     centerMapPosition()
     {
         this.mapPosition = createVector(round(this.mapBoundaries.max / 2), round(this.mapBoundaries.max / 2));
         this.anchor = {position : {x: round(this.mapBoundaries.max / 2), y:round(this.mapBoundaries.max / 2)}};
     }
+
     /** Sets this.mapPosition vector according to the current anchor. 
      * If we change anchor, then slide towards the new target. */
     setMapPosition()
@@ -78,7 +94,7 @@ class Camera
         if(this.mapPosition !== anch)
         {
             let d = dist(this.mapPosition.x, this.mapPosition.y, anch.x, anch.y)
-            if(d <= 50)
+            if(d <= 20)
             {
                 this.mapPosition = anch;
                 if(!this.anchor.dimension) { this.anchor = undefined; }
@@ -132,7 +148,7 @@ class Camera
         this.mapDimensions = createVector(w,h);
     }
 
-    /** Sets this.clicksPerPixels with the amount of clicks there are per Pixel on current screen*/
+    /** Sets this.clicksPerPixels with the amount of clicks there are per Pixel screen */
     setClicksPerPixel()
     {
         this.clicksPerPixel = this.displayedClicks / this.screenSize;
@@ -140,8 +156,7 @@ class Camera
 
     /** Returns a Vector with the pixel position of a given Entity's position
      * @param {*} x : the x position in clicks
-     * @param {*} y : the y position in clicks
-     */
+     * @param {*} y : the y position in clicks */
     mapPointToScreenPoint(x,y)
     {
         let deltaX = x - this.mapPosition.x;
@@ -157,8 +172,7 @@ class Camera
 
     /** Returns a Vector with the map position in clicks from the pixel position on screen
      * @param {*} x : the x position in pixels
-     * @param {*} y : the y position in pixels
-     */
+     * @param {*} y : the y position in pixels */
     screenPointToMapPoint(x,y)
     {
         let deltaX = x - this.screenCenterPoint.x;
@@ -174,8 +188,7 @@ class Camera
 
     /** Returns a Vector with the pixel dimension of a given Entity's dimension
      * @param {*} x : the x dimension in clicks
-     * @param {*} y : the y dimension in clicks
-     */
+     * @param {*} y : the y dimension in clicks */
     mapDimensionsToScreen(x,y)
     {
         let xx = floor(x / this.clicksPerPixel)
@@ -206,6 +219,7 @@ class Camera
         }
         return shape;
     }
+
     /** Returns an entity if there is one at the Screen point */
     getEntity(screenPos, troops)
     {
@@ -221,7 +235,9 @@ class Camera
         })
         return flag;
     }
-    /** Determines if an entity is on screen currently (entity can be a point or ellipse) */
+
+    /** Determines if an entity is on screen currently (entity can be a point or ellipse)
+     * TODO : pass in Areas (vectors of points) */
     isOnScreen(entity)
     {
         if(entity.dimension === undefined)
@@ -263,14 +279,12 @@ class Camera
 
     /** Displays an Ellipse on top of the canvas
      * @param {*} entity : the entity to be displayed {position} | {position, dimension, coloration, stk, name}
-     * @returns Array with position X and Y of the entity on the screen || false
-    */
+     * @returns Array with position X and Y of the entity on the screen || false */
     displayEntity(entity)
     {
         if(!entity.position)
-        {
             return false;
-        }
+        
         if(this.isOnScreen(entity))
         {
             let pos = this.mapPointToScreenPoint(entity.position.x, entity.position.y);
@@ -284,11 +298,19 @@ class Camera
                 dim = createVector(2,2);
             }
 
-            let str = entity.stk || color(250, 250, 250, 150);
+            let str;
+            if(entity.stk.levels)
+                str = color(entity.stk.levels[0], entity.stk.levels[1], entity.stk.levels[2], entity.stk.levels[3] )
+            if(!str)
+                str = color(250, 250, 250, 150);
             strokeWeight(3);
             stroke(str);
 
-            let c = entity.coloration || color(0, 0, 0, 150);
+            let c;
+            if(entity.coloration.levels)
+                c = color(entity.coloration.levels[0],entity.coloration.levels[1],entity.coloration.levels[2], entity.coloration.levels[3]);
+            else
+                c = color(0, 0, 0, 150);
             fill(c);
 
             ellipse(pos.x, pos.y, dim.x, dim.y);
@@ -298,25 +320,82 @@ class Camera
         }
         return false;
     }
+
     /** Displays a closed polygon on the screen.
      * @param {*} area : Polygon to be displayed {position}
-     * @returns Array with position X and Y of the area on the screen || false
-    */
-    displayArea(area)
+     * @returns Array with position X and Y of the area on the screen || false */
+    displayArea(area, ignoreSize, ignoreSizeName)
     {
         if(area.stk)
             stroke( color(area.stk.levels[0], area.stk.levels[1], area.stk.levels[2], area.stk.levels[3] ))
         else
             noStroke();
             
-        let ct;
-        if(area.coloration)
-        {
-            ct = color(area.coloration.levels[0], area.coloration.levels[1], area.coloration.levels[2], area.coloration.levels[3])
-        }
-        let c = ct || color(0,0,0,150);
+        let c;
+        if(area.coloration.levels)
+            c = color(area.coloration.levels[0], area.coloration.levels[1], area.coloration.levels[2], area.coloration.levels[3])
+        else
+            c = color(0,0,0,150);
         fill(c);
 
+        if(area.shape)
+        {
+            // Compute centroid
+            let shapeCentroid = this.centroid(area);
+            shapeCentroid = this.mapPointToScreenPoint(shapeCentroid.x, shapeCentroid.y);
+            shapeCentroid = createVector(shapeCentroid.x, shapeCentroid.y);
+
+            let size = this.estimateRadius(area, shapeCentroid);
+            if(size > 30 || ignoreSize)
+            {
+                this.handleAnimations(area);
+
+                beginShape();
+                area.shape.forEach(point =>
+                {
+                    let p = this.mapPointToScreenPoint(point.x,point.y);
+                    vertex(p.x, p.y);
+                })
+                endShape();
+    
+                // If the name exists and the shape size is between boundaries, display the name
+                if(area.name && (size > 30 || ignoreSizeName))
+                {
+                    if(size <= 60)
+                        this.displayText(shapeCentroid, size / 4, area.name)
+            
+                    else if(size > 50)
+                        this.displayText(shapeCentroid, 14, area.name)
+                }
+                
+                // Return the pixel position of the shape's centroid, because why not.
+                return [shapeCentroid.x, shapeCentroid.y];
+            }
+        }
+        return false;
+    }
+
+    /** Returns an estimate of the radius of a shape. 
+     *  Works by averaging distance from centroid, expect uncertain results.
+     * @param {*} area : Polygon to be analyzed (contains shape array)
+     * @param {Point} center : Centroid
+     * @returns An Integer */
+    estimateRadius(area, center)
+    {
+        let size = 0;
+        area.shape.forEach(point =>
+        {
+            let p = this.mapPointToScreenPoint(point.x,point.y);
+            size += center.copy().dist( createVector(p.x, p.y) );
+        });
+        return floor(size / area.shape.length );
+    }
+
+    /** Modifies an Area's values depending on various Animation flags.
+     * @param {"Pointer"} area : Polygon to be modified
+     * @return void => Changes the Area itself */
+    handleAnimations(area)
+    {
         if(area.animatedColor)
         {
             if(frameCount % area.animatedColor == 0)
@@ -336,48 +415,11 @@ class Camera
         }
         else if(area.animated)
         {
-            //area.shape = camera.getShape(area.position.x, area.position.y, area.radius, area.pointsAmount, area.randomize);
+            area.shape = camera.getShape(area.position.x, area.position.y, area.radius, area.pointsAmount, area.randomize);
         }
-
-        if(area.shape)
-        {
-            // Compute centroid
-            let shapeCentroid = this.centroid(area);
-            shapeCentroid = this.mapPointToScreenPoint(shapeCentroid.x, shapeCentroid.y);
-            shapeCentroid = createVector(shapeCentroid.x, shapeCentroid.y);
-
-            // Display and compute average distance between centeroid and points (in pixels)
-            let size = 0;
-            beginShape();
-            area.shape.forEach(point =>
-            {
-                let p = this.mapPointToScreenPoint(point.x,point.y);
-                let d = shapeCentroid.copy().dist( createVector(p.x, p.y) );
-                size += d;
-                vertex(p.x, p.y);
-            })
-            endShape();
-            size = floor(size / area.shape.length );
-
-            // If the name exists and the shape size is between boundaries, display the name
-            if(area.name && size > 30)
-            {
-                if(size <= 60)
-                {
-                    this.displayText(shapeCentroid, size / 4, area.name)
-                }
-                else if(size > 50)
-                {
-                    this.displayText(shapeCentroid, 14, area.name)
-                }
-            }
-            
-            // Return the pixel position of the shape's centroid, because why not.
-            return [shapeCentroid.x, shapeCentroid.y];
-        }
-        return false;
     }
-    /**Displays a grid on the map with length of square side = size*/
+
+    /**Displays a grid on the map with the length of each side equal to the size param*/
     displayGrid(size)
     {
         for(let i = 0; i <= this.mapBoundaries.max; i+= size)
@@ -400,21 +442,59 @@ class Camera
 
         }
     }
+
+    /** Returns whether there is an obstacle between start and end using steps.
+    * @param {Point} start : Point on the map
+    * @param {Point} end : Point on the map
+    * @param {Integer} stepSize : the size of the steps we use to check. Low value will increase time to compute.
+    * @return void => Changes the Area itself */
+    obstacleBetween(start, end, stepSize)
+    {
+        let step = stepSize;
+        let pos = createVector(start.position.x, start.position.y);
+        let endPos = createVector(end.position.x, end.position.y);
+
+        if(pos.dist(endPos) > 10000)
+        {
+            return true;
+        }
+        let sub = endPos.copy().sub(pos);
+        let ret = false;
+        for(let i = 1; i <= sub.mag() / step; i++)
+        {
+            let current = sub.copy().setMag(i * step); 
+            current = pos.copy().add(current);
+            current = {position : current}
+
+            if(intersectsWithObstacle(current))
+            {
+                ret = true;
+            }
+        }
+        return ret;
+    }
+
     /** Displays a focus area around an entity
      * @param {*} entity : possibly a Troop
-     * @param {boolean} name : flag to add name display;
-    */
-    displayFocus(entity, name, ignoreSize, replaceName)
+     * @param {boolean} name : flag to add name display; 
+     * @param {boolean} ignoreSize : Displays the text even if the Entity is minuscule
+     * @param {String} replaceName : String to be displayed instead of the entity.name value*/
+    displayFocus(entity, name, ignoreSize, replaceName, stk)
     {
         let pos = this.mapPointToScreenPoint(entity.position.x, entity.position.y);
         let dim = this.mapDimensionsToScreen(entity.dimension.x + 10, entity.dimension.y + 10);
-        noFill();
 
+        noFill();
+        strokeWeight(3);
         stroke(0,0,0,255);
         ellipse(pos.x, pos.y, dim.x, dim.y );
-        
         stroke(255,255,255,255);
-        ellipse(pos.x, pos.y, dim.x - 2, dim.y - 2 );
+        ellipse(pos.x, pos.y, dim.x - 3, dim.y - 3 );
+        if(stk)
+        {
+            stroke(stk.levels[0], stk.levels[0], stk.levels[0]);
+            ellipse(pos.x, pos.y, dim.x + 3, dim.y + 3);
+        }
 
 
         if(entity.name && name)
@@ -422,19 +502,15 @@ class Camera
             pos.y += dim.y; // Move the display down
 
             let text = ``; // Figure out the entity's name / text 
-            if(entity.getName)
-                text = entity.getName();
-            else   
-                text = entity.name;
+            text = entity.name;
+            if(replaceName)
+                text = replaceName;
             
             // Display according to the dimension of the Entity on the screen
             if(ignoreSize)
             {
                 pos.y += dim.y + 16;
-                if(replaceName)
-                    this.displayText(pos, 16, replaceName)
-                else
-                    this.displayText(pos, 16, text)
+                this.displayText(pos, 16, text)
             }
             else if(dim.x > 10)
             {
@@ -452,6 +528,7 @@ class Camera
         }
     }
 
+    /** Displays the given Message in white, at ScreenPos, with FontSize */
     displayText(screenPos, fontSize, message)
     {
         fill(255,255,255,175);
@@ -463,6 +540,11 @@ class Camera
         textAlign(LEFT);
     }
 
+    /** Displays the measurement between a starting point and the current mouse position. 
+     * @param {x : Integer, y : Integer} start : The point from which to measure.start
+     * @param {name: String} units : The unit to display.
+    NOTE : THIS MAKES NO SENSE. It should take an end parameter, not rely on the mouse position.
+    The units object similarly is crap. As a note to Robs : this is also used in the Faerun map viz, you'll have to fix it there, too. */
     displayMeasure(start, units)
     {
         let mousePos = this.screenPointToMapPoint(mouseX, mouseY);
@@ -515,7 +597,7 @@ class Camera
         }
     }
 
-    /** Displays the reach of an action */
+    /** Displays the reach of an action around the Troop using it. Also displays a focus on any Troop affected by the action*/
     displayAction(troop, action, otherTroops)
     {
         let pos = this.mapPointToScreenPoint(troop.position.x, troop.position.y);
@@ -540,7 +622,7 @@ class Camera
         ellipse(pos.x, pos.y, dim.x, dim.y);
     }
 
-    /** Displays the whole content of a game */
+    /** Displays the whole content of a "Game", i.e. all of the areas and troops. */
     displayGame(game)
     {
         if(game.areas)
@@ -548,7 +630,7 @@ class Camera
             for(let i = 0; i < game.areas.length; i++)
             {
                 let area = game.areas[i];
-                this.displayArea(area);
+                this.displayArea(area, true);
             }
         }
         if(game.initiativeOrder)
@@ -562,6 +644,7 @@ class Camera
         this.setMapPosition();
     }
 
+    /** Displays a set of circles showing distances from the center of the screen */
     displaySimpleOverlay()
     {
         let pos = createVector(this.mapPosition.x, this.mapPosition.y);
@@ -599,41 +682,46 @@ class Camera
             }
         }
     }
-    /** Displays a set of circles showing distances from the center of the screen */
+
+    /** Displays distances from the center of the screen with Squares, Circles. Also displays the position value of the map, and its boundaries. Looks ugly AF TBF.*/
     displayTacticalOverlay()
     {
+        let screenCenter = this.screenCenterPoint;
         let pos = createVector(this.mapPosition.x, this.mapPosition.y);
-        let dim;
+        let mousePos = this.screenPointToMapPoint(mouseX, mouseY);
+
+        let dim; // If we are anchored, we want to display distances from the anchor so we need to account for its dimension
         if(this.anchor && this.anchor.dimension)
             dim = this.anchor.dimension.copy();
         else 
             dim = createVector(0,0);
 
+        
         for(var i = 10; i >=  1; i--) 
         {
-            let exp = Math.pow(10, i);// 10 to the power of I, so from 1 to 100000 clicks (times one thousand)
+            let exp = Math.pow(10, i);// 10 to the power of I, so from 1 to 1000000000 clicks
             let max = this.mapDimensionsToScreen(exp + dim.x, exp + dim.y); // Get the pixel values for each of the powers of 10
 
-            let e2 = Math.pow(10, i+1)
+            let e2 = Math.pow(10, i+1); // Compute the same thing for i+1. We'll draw between exp and e2
             let max2 = this.mapDimensionsToScreen(e2 + dim.x, e2 + dim.y); // Get the pixel values for each of the powers of 10
 
-            let strokeValue = floor(map(max.y, 0, windowHeight, 5, 25)); // Map the pixel value to an alpha value
-            stroke(0,0,0,strokeValue * 20);
+            let strokeValue = floor(map(max.y, 0, windowHeight, 5, 25)); // Map the pixel value to an alpha value, so that the inner circles are less apparent.
+            stroke(0,0,0,strokeValue * 10);
 
-            let screenCenter = this.screenCenterPoint;
-            // For the inner values between each power of 10 (so 2-3-4-5-6-7-8-9)
+            // Loop through the inner values between each power of 10 (so 1-2-3-4-5-6-7-8-9 * the current exp)
             for(var a = 10; a >= 0; a--)
             {
-                let da = this.mapDimensionsToScreen((a * exp) + dim.x, (a * exp) + dim.y); // Get the pixel dimension
+                noFill();
+
+                let da = this.mapDimensionsToScreen((a * exp) + dim.x, (a * exp) + dim.y); // Get the pixel dimension of the circle
                 let dc = this.mapDimensionsToScreen((a * exp), (a * exp)); // Get the pixel dimension
                 if(a * Math.pow(10,i) < this.displayedClicks)
                 {
-                    // If the pixel value of 
-                    if(max2.y > height * 0.3)
+                    // If the pixel value of the circles is smaller than 1/3 of the screen height, we don't display (would look awful)
+                    if(max2.y > height * 0.3) // && max < height * 2) => wouldn't diplay the things that are too large to see. Consider this if you run the thing on a potato.
                     {
+                        // Draw shhh out. Ellipses are ... well ellipses. Lines are used to draw squares.
                         strokeWeight(1);
-                        fill(0,0,0,3);
-                        stroke(0,0,0,150);
                         ellipse(screenCenter.x, screenCenter.y, da.x, da.y);
                         line(screenCenter.x , screenCenter.y - da.y, screenCenter.x, screenCenter.y + da.y)
                         line(screenCenter.x - da.x , screenCenter.y, screenCenter.x + da.x, screenCenter.y)
@@ -653,7 +741,7 @@ class Camera
                             fill(0,0,0,250);
                             text("" + (a * exp) / 100 + " m", screenCenter.x + 5, screenCenter.y + (da.y) +2)
                             text("" + (a * exp) / 100 + " m", screenCenter.x + 5, screenCenter.y - (da.y) +2)
-                            
+
                         }
                     }
                 }
@@ -661,8 +749,12 @@ class Camera
             textSize(13);
             fill(250,250,250,250);
             text(`( ${floor(pos.x)}, ${floor(pos.y)} )`, screenCenter.x + 5, screenCenter.y - 5);
-        }
 
+            
+            textSize(13);
+            fill(250,250,250,250);
+            text(`( ${floor(mousePos.x /100)}, ${floor(mousePos.y /100)} )`, mouseX + 5, mouseY - 5);
+        }
         this.displayMapBorders();
     }
 
@@ -692,13 +784,11 @@ class Camera
         {
             speed = round(speed  * 1.5) + 1;
         }
-
         if(keyIsDown(UP_ARROW) && this.mapPosition.y > this.mapBoundaries.min)
         {
             this.mapPosition.y -= round(speed);
             this.anchor = undefined;
         }
-
         if(keyIsDown(DOWN_ARROW) && this.mapPosition.y < this.mapBoundaries.max)
         {
             this.mapPosition.y += round(speed);
@@ -714,7 +804,6 @@ class Camera
         {
             this.mapPosition.x += round(speed);
             this.anchor = undefined;
-
         }
     }
 
@@ -740,13 +829,12 @@ class Camera
                 this.displayedClicks -= zoomChange;
             }
         }
-
         this.setMapDimensions();
         this.setClicksPerPixel();
         return false;
     }
 
-    /**RANDOM GLOBAL STUFF */
+    /** Centroid is taking in an set of points and returning the x-y coordinates of the centroid.*/
     centroid(area)
     {
         let vertices = area.shape

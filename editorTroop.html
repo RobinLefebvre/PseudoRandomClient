@@ -32,13 +32,14 @@
         <p class="headerItem" onclick="window.location.href = `${SERVER}editorEncounter.html`">Encounter Editor</p>
         <p class="headerItem" onclick="window.location.href = `${SERVER}editorTroop.html`">Troop Editor</p>
         <p class="headerItem" onclick="window.location.href = `${SERVER}game.html`">Game</p>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}campaignStart.html`">Campaign</p>
     </header>
     <div id="page_content" >
         <div id="troopCreationMenu"> 
-            <input type="submit" value="Troop" id="troopTabToggle" onclick="toggleTroopTab(this.id)" style="width:100%; font-size:1rem; text-decoration: underline; background-color : rgba(0,0,0,0); border:none; outline:none;" /> <br/>
-            <input type="submit" value="Actions" id="actionsTabToggle" onclick="toggleTroopTab(this.id)" style="width:100%; font-size:1rem;  background-color : rgba(0,0,0,0); border:none; outline:none;" /> <br/>
+            <input type="submit" value="Troop Tab" id="troopTabToggle" onclick="toggleTroopTab(this.id)" style="text-decoration: underline;" /> <br/>
+            <input type="submit" value="Actions Tab" id="actionsTabToggle" onclick="toggleTroopTab(this.id)"/> <br/>
             
-            <input value="Save Troop" type="submit" onclick="sendData();" style="font-size:1.1rem; background-color : rgba(0,0,0,0.75); border:none; outline:none; margin-top:2rem; border-radius:0.5rem;"  />
+            <input value="Save Troop" type="submit" onclick="sendData();" style="background-color: rgb(250,180,60); margin-top:2rem; color:rgb(50,50,50)"  />
         </div>
         <div id="troopCreation">
             <!-- ROW 1 -->
@@ -74,7 +75,7 @@
 
             <!-- ROW 10-->
             <p> Armor Class : </p> <input type="number" id="armorClass" value="10" />  
-            <p> Movement Speed : </p> <input type="number" id="speed" value="9" />
+            <p> Movement Speed (m. / turn): </p> <input type="number" id="speed" value="9" />
             
             <!-- ROW 11 -->
             <p style="grid-row : 11/12; grid-column:1/-1;"> </p>
@@ -122,40 +123,38 @@
             <h3> Pools of Actions</h3>
             <table id="poolsTable">
                 <tr style="border : 1px solid rgb(250,180,60);">
-                    <th ><input type="submit" style="font-size:1.2rem; margin-bottom : 0;width:100%; border:none; background-color:rgba(0,0,0,0.5);" id="newAction" value="Add Pool" style="width:100%; margin:0;" onclick="addNewPool()"/></th>
+                    <th ><input type="submit" class="tableButton" id="newAction" value="Add Pool" style="width:100%; margin:0;" onclick="addNewPool()"/></th>
                     <th>Name</th>
                     <th>Points</th>
                 </tr>
             </table>
-            <h3> Actions </h3>
-            <table id="actionsTable">
-                <tr style="border : 1px solid rgb(250,180,60);">
-                    <th ><input type="submit" style="font-size:1.2rem; margin-bottom : 0;width:100%; border:none; background-color:rgba(0,0,0,0.5);" id="newAction" value="Add Action" style="width:100%; margin:0;" onclick="addNewAction()"/></th>
-                    <th>Name</th>
-                    <th>Damage</th>
-                    <th>To Hit</th>
-                    <th>Saving Throw</th>
-                    <th>Target</th>
-                    <th>Uses </th>
-                    <th>Condition</th>
-                </tr>
-            </table>
+            
             <h3>Traits </h3>
+            <div id="traitsHolder">
+
+            </div>
             <table id="traitsTable">
                 <tr style="border : 1px solid rgb(250,180,60);">
-                    <th ><input type="submit" style="font-size:1.2rem; margin-bottom : 0;width:100%; border:none; background-color:rgba(0,0,0,0.5);" id="newAction" value="Add Trait" style="width:100%; margin:0;" onclick="addNewTrait()"/></th>
+                    <th ><input type="submit" class="tableButton" id="newAction" value="Add Trait" style="width:100%; margin:0;" onclick="addNewTrait()"/></th>
                     <th>Name</th>
                     <th>Damage</th>
                     <th>Resist' / Vuln' / Imm' </th>
                     <th>Additional</th>
                 </tr>
             </table>
+            <h3> Actions </h3>
+            <div id="actionsHolder">
+
+            </div>
+            
         </div>
     </div>
     
     <div id="scripts">
+        <script src="scripts/Troop.js"></script>
         <script src="scripts/util.js"></script>
         <script src="scripts/DOM/editorTroopDOM.js"></script>
+
     </div>
 </body>
     

@@ -1,3 +1,4 @@
+#page_content{grid-row : 1/-1;}
 
 #temporary
 {
@@ -11,120 +12,261 @@
 	grid-template-columns:  1fr; grid-template-rows: 1fr;
     padding-left : 0.5rem; padding-right : 0.5rem;
 }
+
 .inputP
 {
     padding:0; cursor:pointer; border-radius:2rem; border:1px solid rgb(250,180,60); text-align:center;
 }
+
 .destinationP
 {
     padding:0; font-size:1.1rem; text-align: justify;
 }
-#interactionTab
-{
-    display: none;
-}
+
 /** Navigation Tab => Quests & Destinations */
 #navigationTab
 {
 	grid-column : 1 / -1;
-    grid-row : 1 / -1;
+    grid-row : 2 / -1;
     display: grid;
-	grid-template-columns: repeat(24, 1fr);
-    grid-template-rows:  repeat(24, 1fr);
+	grid-template-columns: repeat(12, 1fr);
+    grid-template-rows:  repeat(12, 1fr);
     color:rgb(200,200,200);
 }
-/* LEFT-SIDE PANEL for Navigation*/
+
 #quests
 {
-    grid-column:1/6; grid-row:3/21; 
+    grid-column:1/3; grid-row:1/13; 
     background-color:rgba(0,0,0,0.8); 
     border-top-right-radius:2rem; border-bottom-right-radius:2rem;
     padding:0.5rem;
     overflow: auto;
 }
-.areaQuest
-{
-    border-bottom:1px solid rgb(250,180,60);
-}
-.questHolder
-{
-    display:grid;
-    grid-template-columns: 7fr 1fr;
-}
-/* RIGHT-SIDE PANEL for Navigation*/
+
+.areaQuest{border-bottom:1px solid rgb(250,180,60);}
+
+.questHolder{display:grid;grid-template-columns: 7fr 1fr;}
+
 #destinations
 {
-    grid-column:20/-1; grid-row:3/21; 
+    grid-column:11/-1; grid-row:1/13; 
     background-color:rgba(0,0,0,0.8); 
     border-top-left-radius:2rem; border-bottom-left-radius:2rem;
     padding:0.5rem;
     overflow: auto;
 }
 
-.destinationHolder
-{
-    display:grid;
-    grid-template-columns: 1fr;
-}
-/** TOP MENU FOR DISPLAYING POINTS */
-#pointsDisplay
-{
-    grid-column : 7 / 19;
-    grid-row : 1;
-    background-color:rgba(0,0,0,0.9);
+.destinationHolder{display:grid;grid-template-columns: 1fr;}
 
+/* BOTTOM CENTER menu for switching tabs*/
+#menuTab
+{
+    grid-column : 6 / 20;
+    grid-row : 25;
+
+    background-color:rgba(0,0,0,0);
+    border-top-left-radius:2rem; border-top-right-radius:2rem;
+
+    display:grid;
+	grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 1fr;
+}
+
+#menuTab button
+{
+    width : 100%; height:100%; font-size: 1.4rem;
+    background-color:rgba(0,0,0,0.9);
+    color : rgb(200,200,200);
+    border : none;
+    outline: none;
+    border-top-left-radius:2rem; border-top-right-radius:2rem;
+}
+
+#menuTab .activeMenuButton{color : rgb(0,0,0);background-color : rgb(200,200,200);}
+
+/** TOP MENU FOR DISPLAYING EXPERIENCE, ACTIVITY, DATE  */
+#pointsTab
+{
+    grid-column : 6 / 20;
+    grid-row : 1/2;
+    background-color:rgba(0,0,0,0.9);
+    color:rgb(200,200,200);
     border-bottom-left-radius:2rem; border-bottom-right-radius:2rem;
     display:grid;
     
-	grid-template-columns: repeat(6, 1fr) 1fr 3fr;
+	grid-template-columns: repeat(6, 1fr) 1fr 4fr 1fr 2fr;
     grid-template-rows: 1fr;
-    grid-gap : 0.5rem;
-    padding-left : 0.5rem;
+    grid-column-gap : 0.5rem;
+    padding-left : 1.5rem;
     padding-right : 0.5rem;
 }
 
 /** INTERACTIONS */
 #interactionTab
 {
-    grid-column: 5/20; 
-    grid-row:5/20;
-    display:grid;
+    grid-column: 3/22; 
+    grid-row:5/-1;
+    display:none;
     grid-template-columns: 2fr 1fr;
-    grid-template-rows : 1fr 8fr 3fr;
+    grid-template-rows : 1fr 8fr 5fr;
     cursor : default; 
-    background-color:rgba(0,0,0,0.7); 
+    background-color:rgba(0,0,0,0.8); 
+    color : rgb(200,200,200);
+
     border: 1px solid rgb(240,180,60); 
     border-top-left-radius : 2rem; 
     border-top-right-radius : 2rem; 
-    padding-left:0.5rem; 
+    padding:2rem; 
 }
 
-#interactionTab #interactionText
+#interactionTab #interactionText{grid-column: 1/2; grid-row: 1/3;font-size: 1.4rem;}
+
+#interactionTab #interactionImage{grid-column: 2/-1; grid-row:1/-1;}
+
+#interactionTab #interactionOptions{grid-column: 1/2; grid-row: 3/-1;background-color:rgba(50,50,50,0.5);}
+
+#interactionTab button{background-color:rgba(50,50,50,0.8);padding-top:1rem;width:100%;text-align:left;border:none;outline:none;font-size: 1.3rem;}
+
+/*EQUIPMENT TAB*/
+#equipmentTab
 {
-    grid-column: 1/2; 
-    grid-row: 1/3;
-    font-size: 1.2rem;
+	grid-column : 1 / -1;
+    grid-row : 1 / -1;
+    display: none;
+    background-color:rgba(50,50,50,0.5);
+	grid-template-columns: repeat(24, 1fr);
+    grid-template-rows:  repeat(24, 1fr);
+    color:rgb(200,200,200);
 }
 
-
-#interactionTab #interactionImage
+#equipmentSelector
 {
-    grid-column: 2/-1; 
-    grid-row:1/-1;
+    grid-column : 14/24;
+    grid-row : 3/17;
+    border-radius : 0.5rem;
+    display: grid;
+    padding:1rem;
+    grid-template-rows: repeat(10,1fr);
+    grid-template-columns: 1fr 1fr;
+    background-color: rgba(0,0,0,0.8);
 }
 
-#interactionTab #interactionOptions
+#characterInfo
 {
-
-    grid-column: 1/2; 
-    grid-row: 3/-1;
+    grid-column : 2/12;
+    grid-row : 3/23;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(18, 1fr);
+    background-color: rgba(0,0,0,0.8);
+    padding:1rem;
+    border-radius: 1rem;
+    font-size : 1.1rem;
 }
 
-#interactionTab button
+#characterInfo b{font-size : 1.2rem;}
+
+.pools
 {
-    width:100%;
-    text-align:left;
-    border:none;
-    outline:none;
-    font-size: 1.2rem;
+    grid-column : 1/-1;
+    padding:0.5rem;
+    grid-row : 5/7;
+    background-color: rgba(0,0,0,0.2);
+    border-bottom: 1px solid rgb(250,180,60);
+    overflow: auto;
+}
+
+.conditions
+{
+    grid-column : 1/-1;
+    padding:0.5rem;
+    grid-row : 8/11;
+    background-color: rgba(0,0,0,0.2);
+    border-bottom: 1px solid rgb(250,180,60);
+    overflow: auto;
+}
+
+.actions
+{
+    grid-column : 1/-1;
+    padding:0.5rem;
+    grid-row : 12/-1;
+    background-color: rgba(0,0,0,0.2);
+    border-bottom: 1px solid rgb(250,180,60);
+    overflow: auto;
+}
+
+.abilityScore
+{
+    display: grid;
+    border-radius : 0.5rem;
+    grid-column : 1/-1;
+    font-size : 1.2rem;
+    grid-template-columns: repeat(6, 1fr);
+    background-color: rgba(0,0,0,0.5);
+}
+
+/*VENDORS TAB*/
+#inventoryTab
+{
+    grid-column : 2/12;
+    grid-row : 3/ 24;
+    display: none;
+    
+    padding:0.5rem;
+    grid-template-rows: repeat(24,1fr);
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    background-color: rgba(0,0,0,0.8);
+    border-radius : 1rem;
+    color:rgb(200,200,200);
+    overflow:auto;
+    grid-gap : 1rem;
+}
+
+#vendorsTab
+{
+    grid-column : 13/24;
+    grid-row : 3/ 24;
+    display: none;
+
+    padding:0.5rem;
+    grid-template-rows: repeat(24,1fr);
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    background-color: rgba(0,0,0,0.8);
+    border-radius : 1rem;
+    color:rgb(200,200,200);
+    overflow:auto;
+    grid-gap : 1rem;
+}
+.itemHolder
+{
+    grid-column:1/3;
+    display : grid;
+    grid-template-columns: 3fr 2fr 1fr;
+    grid-template-rows : 1fr 4fr;
+    padding : 0.5rem;
+    border-top-left-radius: 0.5rem;    border-top-right-radius: 0.5rem;
+    background-color: rgba(50,50,50,0.5);
+    margin-bottom : 0.5rem;
+    border-bottom : 1px solid rgb(250,180,60);
+    text-align:justify;
+    font-size: 1.1rem;
+}
+.itemHolder:nth-child(2n-6){grid-column:3/-1;}
+.itemSlotsInv
+{
+    grid-column:2/-1;text-align:right;
+}
+.itemName {border-bottom:1px solid rgba(250,180,60,0.5);}
+.itemSlotsVend
+{
+    text-align:center;
+}
+.itemHolder p{margin-top:0rem; margin-bottom:0.5rem;}
+.itemHolder button{padding:auto; border:none; outline:none;}
+.modHolder
+{
+    grid-column : 1/-1;
+    font-size : 1rem;
+    display:none;
 }

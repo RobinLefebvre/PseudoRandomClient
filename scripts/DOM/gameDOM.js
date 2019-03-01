@@ -15,6 +15,18 @@ function writeGameLogs()
 
     }
 }
+function writeGameTab()
+{
+    document.querySelector(`#gameTab`).innerHTML = `<p> Local Game</p>
+    <select id="encounter" onchange="game = {initiativeOrder: []}; writeGame(this.value); " > </select> 
+
+    <p> Play As</p>       
+    <select id="group" onchange="switchPlayer(this.value);"> <option value="---"> --- </option> </select> 
+    <hr/>
+    <!-- TODO : generate some ID and fetch data from server to load that game's status. -->
+    <p> Online Game</p>  
+    <input id="onlineGame" type="text" placeholder="Enter Game ID..." onchange="getOnlineGame(this.value);" /> `
+}
 function writeEncounterSelect()
 {
     let data = LocalData.get("encounters", "All");
@@ -28,21 +40,24 @@ function writeEncounterSelect()
 }
 function writeGame(id)
 {
-    logs(`Launching local game n° ${id}.`);
     if(id !== "---")
     {
         let enc = LocalData.get("encounters", "All");
         let data = enc[id];
-        logs(`-${data.name} is being setup.`);
+        if(data == undefined && id.identifier)
+        {
+           data= id;
+        }
+        logs(`${data.name} is being setup.`);
         camera.setMap(data.mapSize)
 
         game.areas = [];
         data.areas.forEach(a => 
         {
-            if(a.coloration)
-                a.coloration = color(a.coloration.r, a.coloration.g, a.coloration.b, a.coloration.a);
-            if(a.stk)
-                a.stk = color(a.stk.r, a.stk.g, a.stk.b);
+            if(a.coloration.levels)
+                a.coloration = color(a.coloration.levels[0], a.coloration.levels[1], a.coloration.levels[2]);
+            if(a.stk.levels)
+                a.stk = color(a.stk.levels[0], a.stk.levels[1], a.stk.levels[2]);
             a.shape = JSON.parse(a.shape);
             game.areas.push(a);
         })
@@ -50,25 +65,45 @@ function writeGame(id)
         logs(`<br/>`);
         //logs(`Adding Players and their troops.`);
         // Write the Groups option and add the group's troops to the initiative order
+        
         let elt =   `<option value="---" > --- </option>
                     <option value="GM"> GM </option>`;
 
         for(let i= 0; i< data.groups.length; i++) 
         {
             let group = data.groups[i];
-            elt += `<option value="${group.name}" > ${group.name} </option>`;
-            logs(` Adding <b style="color:rgb(${color(group.color).levels[0]}, ${color(group.color).levels[1]},${color(group.color).levels[2]});"> ${group.name} </b>`)
-            group.troops.forEach(troop =>
+            if(group.name == "Adventurers" && data.identifier && CampaignData.getCampaignData() !== undefined)
             {
-                troop.isPlayer = group.name;
-                let t = new Troop(troop);
-                logs(` - Setting up ${t.getHTMLName()} </b>`)
-                t.startGame();
-                game.initiativeOrder.push(t);
-            })
-            logs(`<br/>`)                
+                let pos = group.troops[0].position;
+                let party = CampaignData.get("party");
+                for(let i = 0; i < party.length; i++)
+                {
+                    let p = {x : pos.x + party[i].position.x, y : pos.y + party[i].position.y};
+                    party[i].position = p;
+                    party[i].isPlayer = "Adventurers";
+                    let t = new Troop(party[i]);
+                    t.isAI = undefined;
+                    t.startGame();
+                    game.initiativeOrder.push(t);
+                }
+            }
+            else
+            {
+                elt += `<option value="${group.name}" > ${group.name} </option>`;
+                logs(` Adding <b style="color:rgb(${group.color.levels[0]}, ${group.color.levels[1]},${group.color.levels[2]});"> ${group.name} </b>`)
+                group.troops.forEach(troop =>
+                {
+                    troop.isPlayer = group.name;
+                    let t = new Troop(troop);
+                    logs(` - Setting up ${t.getHTMLName()} </b>`)
+                    t.startGame();
+                    game.initiativeOrder.push(t);
+                })
+                logs(`<br/>`)   
+            }             
         }
-        document.querySelector("#group").innerHTML= elt;
+        if(!data.identifier)
+            document.querySelector("#group").innerHTML= elt;
 
         game.round = 0;
         // Sorting initiative
@@ -79,11 +114,18 @@ function writeGame(id)
         logs(`<br/>`);
         logs(`Starting Game.`);
         game.initiativeOrder[game.currentIndex].startTurn();
-        game.state = "Game";
 
+        if(game.initiativeOrder[game.currentIndex].isAI)
+        {
+            game.state = "AI";
+            AI.startAI();
+        }
+        else{
+            game.state = "Game";
+        }
         toggleTab("turn", "block");
         toggleTab("troop", "none");
-        toggleTab("logs", "none")
+        toggleTab("logs", "none");
     }
     else
     {
@@ -91,7 +133,6 @@ function writeGame(id)
         toggleTab("turn", "none");
         toggleTab("logs", "none");
         document.querySelector("#group").innerHTML= `<option value="---"> --- </option>`;
-
     }
 }
 function writeGameOrder(a)
@@ -134,7 +175,7 @@ function writeTroop(troop)
                         <th> ${troop.getHTMLName()} </th>
                         <th> ${troop.actionsPerTurn - troop.actionsTaken}</th>
                         <th> ${troop.hitPoints.current} / ${troop.hitPoints.maximum} </th>
-                        <th> ${troop.armorClass} </th> 
+                        <th> ${troop.getArmorClass()} </th> 
                     </tr>
                 </table>`; 
 
@@ -163,7 +204,7 @@ function writeTroop(troop)
                         if (!a.condition || !a.condition.recharge || (a.condition.recharge && troop.pools[a.condition.recharge.split(", ")[0]] == 0) )
                         {
                             // If the action costs more than what we can afford, don't display it
-                            if(!a.useCost || (troop.actionsPerTurn - troop.actionsTaken - a.useCost >= 0) )
+                            if(!a.addCost || (troop.actionsPerTurn - troop.actionsTaken - a.addCost >= 0) )
                             {
                                 // If we haven't used the action before on this turn.
                                 if(!a.hasBeenUsed)
@@ -171,7 +212,6 @@ function writeTroop(troop)
                                     // We can't apply a condition to ourselves if we already have it
                                     if( a.target != "Self" || !a.condition || (a.target == "Self" && !troop.hasCondition("name", a.condition.name)) )
                                     {
-                                        // Display the amount of uses we have left for the action
                                         let u = ``;
                                         if(a.uses != -1) { u += `(${a.uses})` }
                                         if(a.pool && troop.pools[a.pool] != -1) { u= `(${troop.pools[a.pool]})`; }
@@ -187,10 +227,11 @@ function writeTroop(troop)
                                 }
                             }
                         }
-                    }                            
+                    }
                 }
             }
         }
+        
         // Add the Next Turn button.
         elt += `<th> <input class="actionButton" style="background-color:rgb(255,255,255,0.7); color:rgb(50,50,50);" type="submit" value="End Turn" onclick="nextTurn();" /> </th>`;
         elt += `</tr></tbody></table>`

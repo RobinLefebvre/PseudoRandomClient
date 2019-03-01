@@ -1,0 +1,29 @@
+#vendorInfo
+{
+    grid-column : 13/24;
+    grid-row : 2/3;
+}
+#itemsList
+{
+    grid-column : 13/24;
+    grid-row : 3/-1;
+    overflow: auto;
+}
+.itemHolder
+{
+    grid-column : 1/-1;
+    display : grid;
+    grid-template-columns: 3fr 3fr 1fr;
+    grid-template-rows : 1fr 6fr;
+    padding : 1rem;
+    border-top-left-radius: 2rem;
+    background-color: rgba(0,0,0,0.5);
+    margin-bottom : 1rem;
+    border-bottom : 1px solid rgb(250,180,60);
+}
+.modHolder
+{
+    grid-column : 1/-1;
+    height: 100%;
+    border-top : 1px solid rgba(250,180,60,0.5);
+}

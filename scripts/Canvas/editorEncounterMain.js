@@ -18,8 +18,9 @@ function setup()
     changeRadius();
     
     noiseSeed("PseudoRandom");
+
     writeGroups("groupsData");
-    displayEdit();
+    writeSavedMapsOption();
 }
 function draw()
 {
@@ -27,7 +28,7 @@ function draw()
     
     areas.forEach(a =>
     {
-        camera.displayArea(a);
+        camera.displayArea(a, true);
     });
 
     for(let group = 0; group < groups.length; group++)
@@ -54,7 +55,7 @@ function draw()
                     camera.displayAction(troop, a)
                 }
             }
-
+            troop.stk = groups[group].color;
             camera.displayEntity(troop);  
         }
     }
@@ -71,6 +72,7 @@ function loadEncounter(id)
     {
         let encounterID = id.match(/encounter([0-9]+)/);
         let mapID = id.match(/map([0-9]+)/);
+        
         let data;
         if(encounterID != null)
         {
@@ -104,7 +106,8 @@ function loadEncounter(id)
             groups[group] = {};
             groups[group].name = g.name;
             groupsName[group] = g.name;
-            groups[group].color = color(g.color);
+            groups[group].color = {};
+            groups[group].color.levels = color(g.color).levels;
             groups[group].troops = [];
             g.troops.forEach(troop =>
             {
@@ -124,7 +127,7 @@ function loadEncounter(id)
         for(let i = 0; i < data.areas.length; i++)
         {
             let area = data.areas[i];
-            area.coloration = color(area.coloration.r, area.coloration.g, area.coloration.b, area.coloration.a );
+            area.coloration = color(area.coloration.levels[0], area.coloration.levels[1], area.coloration.levels[2], area.coloration.levels[3] );
             area.shape = JSON.parse(area.shape);
             areas.push(area);
         }
@@ -144,7 +147,7 @@ function saveEncounter(json)
     {
         let area = {};
         area.name = a.name;
-        area.coloration = {r: a.coloration.levels[0], g: a.coloration.levels[1], b: a.coloration.levels[2], a: a.coloration.levels[3] };
+        area.coloration = {levels : a.coloration.levels};
         for(let i = 0; i < a.shape.length; i++){a.shape[i] = {x : a.shape[i].x, y:a.shape[i].y} }
         area.shape = JSON.stringify(a.shape);
         area.position = {x : a.position.x, y: a.position.y};
@@ -169,7 +172,7 @@ function saveEncounter(json)
     {
         grps[group] = {};
         grps[group].name = document.querySelector(`#name${group}`).value;
-        grps[group].color = document.querySelector(`#color${group}`).value;
+        grps[group].color = {levels : color(document.querySelector(`#color${group}`).value).levels};
         grps[group].troops = [];
         if(groups[group].troops.length == 0)
         {
@@ -225,7 +228,7 @@ function addTroop(group)
     let t = LocalData.get("troops", "All")[0];
     t.position = {x : round(camera.mapPosition.x), y : round(camera.mapPosition.y) };
     let c = color(document.querySelector(`#description`).value);
-    t.stk = {r: c.levels[0], g:c.levels[1], b:c.levels[2]};
+    t.stk = {levels : c.levels};
 
     t = new Troop(t);
     groups[group].troops.push(t); 
@@ -246,8 +249,8 @@ function editTroop(group, id)
     let posY = document.querySelector(`#posY${group}_${id}` );
     let pos = createVector(Number.parseFloat(posX.value * 100), Number.parseFloat(posY.value *100) );
     let col = color(document.querySelector(`#color${group}`).value);
-    col = {r: col.levels[0],g: col.levels[1], b: col.levels[2] };
-    LocalData.getAllTroops().forEach( troop => 
+    col = {levels : col.levels };
+    LocalData.get("troops","All").forEach( troop => 
     {
         if(troop.name == n)
         {
@@ -271,7 +274,7 @@ function addArea(id, shapeI, args)
     {
         name = "";
         pos = createVector(camera.mapPosition.x, camera.mapPosition.y);
-        radius = 50;
+        radius = gridSnap * 5;
         pointsAmount = 4;
         col = color(0,0,0);
         randomize = 0;
@@ -288,6 +291,7 @@ function addArea(id, shapeI, args)
         radius = Number.parseInt(document.querySelector(`#areaSize${id}`).value * 100);
         pointsAmount = Number.parseInt(document.querySelector(`#areaPointsAmount${id}`).value);
         col = color(document.querySelector(`#areaCol${id}`).value);
+        col = {levels : col.levels};
         col.levels[3] = 255 - Number.parseInt(document.querySelector(`#areaAlpha${id}`).value);
         randomize = Number.parseFloat(document.querySelector(`#areaRandom${id}`).value);
         isObstacle = document.querySelector(`#areaObstacle${id}`).checked;
@@ -450,7 +454,8 @@ function subdivide(id, passes, args)
         a.centro = true;
         if(args.lerpColoration)
         {
-            let col = lerpColor(areas[id].coloration, args.lerpColoration, 0.5);
+            let c= color(areas[id].coloration.levels[0], areas[id].coloration.levels[1], areas[id].coloration.levels[2], areas[id].coloration.levels[3])
+            let col = lerpColor(c, args.lerpColoration, 0.5);
             a.coloration = col;
         }
         if(args.identifySub)
@@ -507,7 +512,7 @@ function mouseDragged(event)
         {
             let mousePos = camera.screenPointToMapPoint(mouseX, mouseY);
             mousePos = createVector(mousePos.x, mousePos.y);
-            let dist = camera.displayedClicks/20;
+            let dist = camera.displayedClicks/5;
 
             event.preventDefault();
             if(keyIsDown(CONTROL))
@@ -544,13 +549,20 @@ function dragTroop(mousePos, dist)
 
     if(elt)
     {
-        mousePos.x = floor(mousePos.x / gridSnap) * gridSnap;
-        mousePos.y = floor(mousePos.y / gridSnap) * gridSnap;
+        mousePos.x = (floor(mousePos.x / gridSnap) * gridSnap) + floor(gridSnap / 2);
+        mousePos.y = (floor(mousePos.y / gridSnap) * gridSnap) + floor(gridSnap / 2);;
         document.querySelector(`#posX${elt.g}_${elt.i}`).value = mousePos.x / 100;
         document.querySelector(`#posY${elt.g}_${elt.i}`).value = mousePos.y / 100;
 
         closestTroop.position.x = mousePos.x;
         closestTroop.position.y = mousePos.y;
+    }
+}
+function dragFullArea(mousePos)
+{
+    for(let areaIndex = 0; areaIndex < areas.length; areaIndex++)
+    {
+
     }
 }
 function dragArea(mousePos, dist)

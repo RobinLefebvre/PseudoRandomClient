@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PseudoRandom - Combat Encounter Tester</title>
 
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
     <!-- p5 
     <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
     <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/addons/p5.dom.min.js"></script>-->
@@ -36,15 +38,7 @@
         </div>
         <!--Game Tab allows to pick a Local Game, to pick a Player in that game or to Input an Online id of some sort. -->
         <div id="gameTab">
-            <p> Local Game</p>
-            <select id="encounter" onchange="game = {initiativeOrder: []}; writeGame(this.value); " > </select> 
-
-            <p> Play As</p>       
-            <select id="group" onchange="switchPlayer(this.value);"> <option value="---"> --- </option> </select> 
-            <hr/>
-            <!-- TODO : generate some ID and fetch data from server to load that game's status. -->
-            <p> Online Game</p>  
-            <input id="onlineGame" type="text" placeholder="Enter Game ID..." onchange="getOnlineGame(this.value);" /> 
+            
         </div>
         
         <!-- Turn Tab is populated by <scripts> with the Initiative Order updated according to the game's state -->
@@ -65,6 +59,8 @@
         <script src="scripts/Camera.js"> </script>
         <!-- Troop is the class allowing to roll dices and basically play the game. -->
         <script src="scripts/Troop.js"> </script>
+        <!-- AI is the class responsible for making Troop decisions. -->
+        <script src="scripts/AI.js"> </script>
         <!-- Util is basically all the shared code, so yeah, it's always gun'be messy there. -->
         <script src="scripts/util.js"> </script>
 

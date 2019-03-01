@@ -1,26 +1,66 @@
+/**writeGroups writes the Group's Data into DOM.
+ * @param {String} holderID : the holder element's ID 
+ * @param {String} groupNames : an Array of the Group names => Should be Group data*/
+function writeGroups(holderID, groupNames)
+{
+    let elt = document.querySelector(`#${holderID}`);
+    elt.innerHTML = "";
+    for(let i = 0; i < groupsAmount; i++)
+    {
+        let name; 
+        if(groupNames && groupNames[i])
+        {
+            name = `${groupNames[i]}`;
+        }
+        else 
+        {
+            name = `Group ${i+1}`; 
+        }
+        let partyHolder = document.createElement("div");
+        partyHolder.id = `group${i}`;
+        partyHolder.style = `border-right :1px solid rgb(250, 180, 60);`
+        partyHolder.innerHTML += 
+            `<input type="text" id="name${i}" value="${name}">  
+            <input style="margin-left:1rem;" type="color" id="color${i}" value="#FFFFFF" onchange="changeGroupColor(${i}, this.value)" />
+            <input style="margin-left:1rem;" type="submit" value="Add Troop" onclick="addTroop(${i})" />
+            <input style="margin-left: 2rem; type="text" value="" />`
+        
+        let troopsHolder = document.createElement("div");
+        troopsHolder.id = `holder${i}`;
+        troopsHolder.style = `width : 95%; margin : auto; border-top : 1px solid rgb(250, 180, 60); border-right :1px solid rgb(250, 180, 60); `
+        partyHolder.append(troopsHolder);
 
-
-/**Functions dumped in a file.
- *  Used for DOM edition in encounterEditor.html */
-
- /**displayEdit displays all the possible Encounters available in localStorage into a HTML element.  */
- function displayEdit()
- {
-     let ret = `<option value=""> --- </option>`;
-     let d = LocalData.get("encounters", "All");
-     let d2 = LocalData.get("maps", "All");
-     for(let i = 0; i < d.length; i++)
-     {
+        elt.append(partyHolder);
+        if(groups[i])
+        {
+            writeTroops(i);
+        }
+        elt.append(partyHolder);
+    }
+}
+function changeGroupColor(index, value)
+{
+    let col = color(value);
+    groups[id].color = {levels : col.levels};
+}
+/**writeSavedMapsOption displays all the possible Encounters available in localStorage into a HTML element.  */
+function writeSavedMapsOption()
+{
+    let ret = `<option value=""> --- </option>`;
+    let d = LocalData.get("encounters", "All");
+    let d2 = LocalData.get("maps", "All");
+    for(let i = 0; i < d.length; i++)
+    {
         let enc = d[i];
         ret += `<option value="encounter${i}" > ${enc.name} </option>`; 
-     }
-     for(let i = 0; i < d2.length; i++)
-     {
+    }
+    for(let i = 0; i < d2.length; i++)
+    {
         let enc = d2[i];
         ret += `<option value="map${i}" > ${enc.name} </option>`; 
-     }
-     document.querySelector(`#edit`).innerHTML = ret;
- }
+    }
+    document.querySelector(`#edit`).innerHTML = ret;
+}
  
   /**writeExplanation displays a message of explanation from onmouseover message
    * @param {String} value : the message to be displayed 
@@ -56,6 +96,10 @@
         case "gridDisplay" :
              write = "<b> Grid Display : </b><br/> Check the box to have the grid on the map. <br/> Number determines the size of each cell on the grid. <br/><br/> 'Murican tip : Setting this to 150 is equivalent to having a 5ft. grid. ";
              break;
+            
+        case "gridSnap" :
+            write = "<b> Grid Snap : </b><br/>Number determines a number at which to snap the mouse drag events. <br/>";
+            break; 
 
         // AREAS TAB
         case "editArea":
@@ -105,43 +149,6 @@
      elt.innerHTML = write;
  }
  
-  /**writeGroups displays a message of explanation from onmouseover message
-   * @param {String} holderID : the holder element's ID */
- function writeGroups(holderID, groupNames)
- {
-     let elt = document.querySelector(`#${holderID}`);
-     elt.innerHTML = "";
-     for(let i = 0; i < groupsAmount; i++)
-     {
-        let name; 
-        if(groupNames && groupNames[i])
-         {
-            name = `${groupNames[i]}`;
-         }
-         else 
-            name = `Group ${i+1}`; 
-         let partyHolder = document.createElement("div");
-         partyHolder.id = `group${i}`;
-         partyHolder.style = `border-right :1px solid rgb(250, 180, 60);`
-         partyHolder.innerHTML += 
-             `<input type="text" id="name${i}" value="${name}">  
-             <input style="margin-left:1rem;" type="color" id="color${i}" value="#FFFFFF" />
-             <input style="margin-left:1rem;" type="submit" value="Add Troop" onclick="addTroop(${i})" />
-             <input style="margin-left: 2rem; type="text" value="" />`
-         
-         let troopsHolder = document.createElement("div");
-         troopsHolder.id = `holder${i}`;
-         troopsHolder.style = `width : 95%; margin : auto; border-top : 1px solid rgb(250, 180, 60); border-right :1px solid rgb(250, 180, 60); `
-         partyHolder.append(troopsHolder);
- 
-         elt.append(partyHolder);
-         if(groups[i])
-         {
-             writeTroops(i);
-         }
-         elt.append(partyHolder);
-     }
- }
  
  /** Write troops div from the group
   * @param {*} group : the group's key in the troops object*/
@@ -240,7 +247,7 @@ function writeArea(id, area)
         n.id = id;
         n.innerHTML = `<div id="areaData${n.id}" style="cursor: pointer; border-bottom: 1px solid rgb(250,180,60);" >
                             <input id="areaName${n.id}" onmouseover='writeExplanation("areaName", 2);' type="text" placeholder="Enter Area Name..." value="${name}" style="margin-right:2rem;" onchange="areas[${n.id}].name = this.value;" /> ${id}
-                            <input id="areaCol${n.id}"  onmouseover='writeExplanation("areaColor", 2);' type="color" onchange="areas[${n.id}].coloration = color(this.value);" value="${col}" style="margin-right:2rem; width:2rem;" /> 
+                            <input id="areaCol${n.id}"  onmouseover='writeExplanation("areaColor", 2);' type="color" onchange="changeAreaColor(${n.id}, this.value);" value="${col}" style="margin-right:2rem; width:2rem;" /> 
                             Transparency : <input id="areaAlpha${n.id}" style="margin-right:2rem;" onmouseover='writeExplanation("areaAlpha", 2);' type="range" step=1 min=0 max=255 value="${alpha}" onchange="areas[${n.id}].coloration.levels[3] = 255 - parseInt(this.value); " />
                             Center : ( X =  <input style="width:2rem;" id="areaPosX${n.id}" type="number"  value="${pos.x}"  onchange="areas[${n.id}].position.x = Number.parseFloat(this.value * 100); redrawArea(${n.id});"  onmouseover='writeExplanation("areaPos", 2);' />
                             , Y = <input style="width:2rem;" id="areaPosY${n.id}" type="number" value="${pos.y}" onchange="areas[${n.id}].position.y = Number.parseFloat(this.value * 100); redrawArea(${n.id});"  onmouseover='writeExplanation("areaPos", 2);' /> )
@@ -264,7 +271,11 @@ function writeArea(id, area)
         elt.append(n);
     }
 }
-
+function changeAreaColor(index, value)
+{
+    let col = color(value);
+    areas[index].coloration = {levels : col.levels};
+}
 /** Writes a row for each of the points in a given shape */
 function writePointsHTML(id, shape)
 {

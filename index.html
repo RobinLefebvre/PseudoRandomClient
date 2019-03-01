@@ -36,22 +36,24 @@ Now, only God knows. -->
         <p class="headerItem" onclick="window.location.href = `${SERVER}editorEncounter.html`">Encounter Editor</p>
         <p class="headerItem" onclick="window.location.href = `${SERVER}editorTroop.html`">Troop Editor</p>
         <p class="headerItem" onclick="window.location.href = `${SERVER}game.html`">Game</p>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}campaignStart.html`">Campaign</p>
     </header>
     <!-- Page Content -->
     <div id="page_content">
         <!--Input File contains a File Input for custom content-->
-        <div id='contentFileInput' style="padding-left : 2rem;" >
-            <h2> Content Input </h2>
+        <div id='contentFileInput' >
+            <h2> Content Import </h2>
             <input type="file" name="file" onchange="LocalData.storeToLocal(this.files);" style="background-color : rgba(0,0,0,0.5); height : 2rem; margin:1rem;" />
         </div>
 
         <!--Content list is the holder for DOM elements created by <scripts> -->
-        <div id='contentList' style="padding : 2rem; padding-bottom: -2rem; overflow:scroll;"> 
-            <h2> Content List 
-                <input type="submit" value="Export Active" style="" onclick="LocalData.exportActiveToJSON();" /> 
-                <input type="submit" value="Export All" style="background-color : rgb(50,50,50); width:6rem;" onclick="LocalData.exportToJSON();" /> 
-            </h2>
-            <div class="sources" style="border-radius : 1rem;"> </div>
+        <div id='contentList'> 
+            <h2 style="text-align:center;"> Content List  </h2>
+            <input type="submit" value="Export Active" style="background-color: rgba(0,0,0,0.7);" onclick="LocalData.exportActiveToJSON();" /> 
+            <input type="submit" value="Export All" style="background-color: rgba(200,200,200,0.7);color: rgb(0,0,0);" onclick="LocalData.exportToJSON();" /> 
+            <p></p>
+            <div class="sources fullRow">
+            </div>
         </div>
     </div>
 

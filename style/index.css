@@ -1,23 +1,95 @@
 /** INDEX page */
+div { display:grid; }
+.sources
+{
+    border-radius : 1rem;
+}
 #contentFileInput
 {
-    background-color : rgb(50,50,50);
 	grid-column : 1/-1;
-    grid-row :  1;
+    grid-row : 1/2;
+    padding:2rem;
+    padding-top : 1rem;
 
-    padding : 0.5rem;
-    border-bottom : solid 1px rgb(250, 180, 60);
-
+    background-color : rgb(50,50,50);
     color:rgb(200,200,200);
+    border-bottom : solid 1px rgb(250, 180, 60);
 }
 #contentList
 {
-    background-color : rgb(50,50,50);
 	grid-column : 1/-1;
-    grid-row :  2/-1;
+    grid-row :  3/-1;
 
-    padding : 0.5rem;
-    border-top : solid 1px rgb(50,50,50);
+    grid-template-columns : 2fr 1fr 1fr 10fr;
+    grid-template-rows : 1fr repeat(20, 4fr);
+    grid-column-gap : 2rem;
+    padding : 1rem;
 
+    background-color : rgb(50,50,50);
     color:rgb(200,200,200);
+
+    border-top : solid 1px rgb(50,50,50);
+    overflow:scroll;
+}
+
+.sourceHolder
+{
+    display : grid;
+    grid-template-columns: 1fr 1fr 10fr;
+    grid-template-rows : 1fr;
+
+    background-color:rgba(0,0,0,0.5); 
+    color:rgb(200,200,200); 
+    padding:1rem;
+    margin:0.5rem;
+    font-size: 1.6rem; 
+    font-weight : bold; 
+    border-bottom:1px solid rgb(250, 180, 60);
+}
+
+.deleteSourceButton
+{
+    background-color:rgb(50,50,50); 
+    color: rgb(255,255,255);
+
+    font-size : 1.2rem; 
+    border-radius:0.5rem; 
+    border:none; outline: none;
+}
+.sourceName{ cursor: pointer; }
+.activityCheckbox{ margin:auto; height:50%; }
+.contentHolder
+{
+    display : none;
+    background-color:rgba(0,0,0,0.7);
+    color:rgb(200,200,200); 
+
+    margin: 0.5rem; margin-top:-0.5rem; 
+    border-bottom : 1px solid rgb(250, 180, 60);
+}
+.elementDeleteButton
+{
+    border:none;
+}
+.key
+{
+    cursor: pointer;
+    padding : 0.6rem;
+    padding-left: 2rem;
+}
+
+.element
+{
+    cursor: default; 
+    padding : 0.25rem;
+    border-bottom:1px solid rgba(250,180,60,0.7);
+    grid-template-columns: 1fr 20fr;
+    grid-template-rows : 1fr;
+}
+
+.elementDeleteButton
+{
+    margin:auto;
+    margin-right : 2rem;
+
 }

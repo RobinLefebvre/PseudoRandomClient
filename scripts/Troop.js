@@ -1,13 +1,16 @@
 class Troop
 {
     /** Constructor for a Troop
-     * @param {TroopData} args : (OPTIONAL) data from a Troop to load (usual data source : inside an Encounter)  */
+     * @param {TroopData} args : JSON data of a Troop / HTML Form data of a Troop.  */
     constructor(args)
     {
         this.name = args.name || "Default Troop";
         // Keep track of the various values that will need resetting.
         this.originalData = {};
-        
+
+        this.isAI = args.isAI || false;
+        this.originalData["isAI"] = this.isAI;
+
         //Is Player tells which Party the troop belongs to. Needs to be stored because of Charm spells
         this.isPlayer = args.isPlayer || false;
         this.originalData["isPlayer"] = args.isPlayer;
@@ -15,57 +18,65 @@ class Troop
         // Stroke value for the Troop being drawn on the map / shown in Menu. Being Charmed during play should change this, so we add it to originalData.
         if(args.stk)
         {
+            this.stk = {};
+            this.originalData["stk"] = {};
+
+            if(args.stk.levels)
+            {
+                this.stk.levels = args.stk.levels;
+                this.originalData["stk"].levels = args.stk.levels;
+            }
             if(args.stk.r)
             {
-                this.stk = color(args.stk.r, args.stk.g, args.stk.b);
-                this.originalData["stk"] = color(args.stk.r, args.stk.g, args.stk.b);
-            }
-            else if(args.stk.levels)
-            {
-                this.stk = color(args.levels[0], args.levels[1], args.levels[2]);
-                this.originalData["stk"] = color(args.levels[0], args.levels[1], args.levels[2]);
+                this.stk.levels = [args.stk.r,args.stk.g, args.stk.b, args.stk.a];
+                this.originalData["stk"].levels = [args.stk.r,args.stk.g, args.stk.b, args.stk.a];
             }
         }
         
         // Position for the Troop being drawn on the map.
-        this.position = args.position || createVector(0,0);
+        this.position = args.position || {x : 0, y : 0};
 
         // Dimension for the Troop being drawn on the map.
         if(args.radius) // Radius is remnant of Older version, relying on the Troop Editor... Will eventually dissapear
-            this.dimension = createVector( Number.parseInt(args.radius),  Number.parseInt(args.radius));
+            this.dimension = {x :  Number.parseInt(args.radius),  y : Number.parseInt(args.radius) };
         if(args.dimension)
-            this.dimension = createVector( Number.parseInt(args.dimension.x), Number.parseInt(args.dimension.y));
+            this.dimension = {x :  Number.parseInt(args.dimension.x),  y : Number.parseInt(args.dimension.y) };
+        if(this.dimension === undefined)
+            this.dimension = {x :  75,  y : 75 };
 
         // Fluff data is filleable with so much random BS that the possibilities are frightening, but we'll get to that later.
-        this.fluffData = 
-        {
-            size : args.size || "Medium"
-        }
+        this.fluffData = { size : args.size || "Medium", type : args.type || "Creature" }
 
         // Some Default ability score (so you can see the content of the map)
         let stdScore = {"Strength" : {score : 14, bonus : 2}, "Dexterity" : {score : 14, bonus : 2}, "Constitution" : {score : 14, bonus : 2}, "Intelligence" : {score : 10, bonus : 0},  "Wisdom" : {score : 10, bonus : 0}, "Charisma" : {score : 10, bonus : 0}}
         this.abilityScores = args.abilityScores || stdScore;
-        this.originalData["abilityScores"] = this.abilityScores;
+        this.originalData["abilityScores"] = clone(this.abilityScores);
 
         // Hit points holds a dice roll before the Troop sets itself up for the game. Then it contains Current and Maximum HP.
-        this.hitPoints = args.hitPoints ||  {dieAmount : 1, dieType : 6, bonus : this.abilityScores["Constitution"]}
-        this.originalData["hitPoints"] = this.hitPoints;
+        this.hitPoints = args.hitPoints ||  {dieAmount : 1, dieType : 6, bonus : this.abilityScores["Constitution"].bonus}
+        this.originalData["hitPoints"] = clone(this.hitPoints);
 
         // Armor Class is subject to change throughout a game, so should be recorded into originalData
         // TODO : Use object like {"base" : "10", "ability" : "Dexterity"}
-        this.armorClass = args.armorClass || {"base" : 10, "ability" : "Dexterity"}; 
-        this.originalData["armorClass"] = this.armorClass;
+        if(!args.armorClass)
+            this.armorClass = {"base" : 10, "ability" : "Dexterity"}
+        else if(args.armorClass.base === undefined)
+            this.armorClass= {"base" : args.armorClass};
+        else
+            this.armorClass = args.armorClass; 
 
         // Take initiative bonus from DEX. Can have Conditions which alter it later on.
         this.initiativeBonus = this.abilityScores["Dexterity"].bonus;
 
         // Speed is the amount of movement you get each turn and it is subject to variations with conditions.
         this.speed =  Number.parseInt(args.speed) || 900;
-        this.originalData["speed"] = this.speed;
+        this.originalData["speed"] = clone(this.speed);
 
         // The amount of actions we can play each turn will change quite often.
         this.actionsPerTurn = Number.parseInt(args.actionsPerTurn) || 1;
-        this.originalData["actionsPerTurn"] = this.actionsPerTurn;
+        this.turnsAmount = Number.parseInt(args.turnsAmount) || 1;
+        this.originalData["actionsPerTurn"] = clone(this.actionsPerTurn);
+        this.originalData["turnsAmount"] = clone(this.turnsAmount);
 
         // No Troop has any Damage Modifier on its own. These come from having Conditions.
         this.resistances = "";
@@ -79,31 +90,30 @@ class Troop
         if(args.actions)
             args.actions.forEach(a => {this.actions.push(a)})
 
-        if(!this.hasAction("damage"))
-            this.actions.unshift({name:"Unarmed Strike", damage : "1", damageAbility : "Strength", damageType : "Bludgeoning", toHit : "Strength", toHitExtra : 2, target:"Enemy", reach:150, areaEffect:1, uses : -1});
-
-        if(!this.hasAction("name", "Help"))
+        if(this.hasAction("name", "Help") === false)
             this.actions.unshift({name:"Help", target:"Ally", reach:150, areaEffect:1, uses : -1, condition : {name:"Helped by " + this.name, duration:1, advantageHit : true}});
         
-            if(!this.hasAction("name", "Dodge"))
+        if(this.hasAction("name", "Dodge") === false)
             this.actions.unshift({name:"Dodge", target:"Self", reach:10, areaEffect:1, uses : -1, condition : {name:"Dodging", duration : 0, disadvantageTarget : true}});
 
-        if(!this.hasAction("name", "Dash") && this.speed > 0)
+        if(this.hasAction("name", "Dash") === false && this.speed > 0)
             this.actions.unshift( {name:"Dash", target:"Self", reach:10, areaEffect:1, uses : -1, condition : {name:"Dashing", duration:0, moveMod:1, damage:0}} );
 
         // A Troop can start the game with some Conditions / Traits
         this.conditions = args.conditions || [];
 
-        // Pools of actions are String-Integer pairs limiting uses for actions
+        // Pools of actions are String-Integer pairs limiting uses for Actions
         this.pools = args.pools || {};
-
+        
+        // A Troop can receive an equipment which is a map of modifier lists.
+        this.equipment = args.equipment || {};
         this.modifiers = args.modifiers || [];
 
         // Since we receive JSON, we double check the parsing of everything for DataTypes. Me no want no NaN.
         this.parse();
     }
 
-    /** Make sure all the data is properly converted from the storage to the instance */
+    /** Make sure all the data is properly converted from the storage to the instance. TODO : use Action and Conditions class to parse. */
     parse()
     {
         // Parse ability score
@@ -120,55 +130,44 @@ class Troop
                 this.hitPoints[key] = Number.parseInt(this.hitPoints[key])
             }
         }
+        // Parse Armor Class
+        for(let key in this.armorClass)
+        {
+            this.armorClass[key] = Number.parseInt(this.armorClass[key]) || this.armorClass[key];
+        }
+        this.originalData["armorClass"] = clone(clone(this.armorClass));
+
+        // Parse Pools
         for(let key in this.pools)
         {
             this.pools[key] = Number.parseInt(this.pools[key]);
         }
 
-        // Parse all of the Troop's actions => Can be handled by creating Action objects.
+        // Parse all of the Troop's actions
         for(let i = 0; i < this.actions.length; i++)
         {
-            let act = this.actions[i];
+            let act = new Action(this.actions[i]); // Create action object
             for(let key in act)
             {
-                if(act[key] === "true")
-                {
-                    act[key] = true;
-                }
-                else
-                {
-                    if(key !== "damage") // Damage is often misread as an Integer because of `d` character being listed as valid (Thanks, JS)
-                    {
-                        act[key] = Number.parseInt(act[key]) || act[key];
-                        if(act[key] == "0"){ act[key] = 0; }
-                    }
-                }
-            }
-            // Parse the condition within any Action
-            if(act.condition)
-            {
-                for(let key in act.condition)
-                {
-                    if(act.condition[key] == "true")
-                    {
-                        act.condition[key] = true;
-                    }
-                    else
-                    {
-                        if(key !== "damage") // Damage is often misread as an Integer because of `d` character being listed as valid  (Thanks, JS)
-                        {
-                            act.condition[key] = Number.parseInt(act.condition[key]) || act.condition[key];
-                            if(act.condition[key] == "0"){ act.condition[key] = 0; }
-
-                        }
-                    }
-                }
+                this.actions[i][key] = act[key]; // Clone each key of the action object.
             }
         }
+        for(let i = 0; i < this.conditions.length; i++)
+        {
+            let cond = new Condition(this.conditions[i]);
+            for(let key in cond)
+            {
+                this.conditions[i][key] = cond[key];
+            }
+        }
+        this.applyEquipment();
     }
 
+    /** Looks at the Troop's data and generates the things we need to store locally. */
     toJSON()
     {
+        this.removeEquipment();
+
         let ret = {};
         ret.name = this.name;
         ret.position = { x : this.position.x, y: this.position.y}
@@ -182,7 +181,7 @@ class Troop
         ret.actions = this.actions;
         ret.conditions = this.conditions;
         ret.pools = this.pools;
-        ret.modifiers = this.modifiers;
+        ret.equipment = this.equipment;
 
         return JSON.stringify(ret);
     }
@@ -193,13 +192,16 @@ class Troop
         return `<b style="color:rgb(${this.stk.levels[0]},${this.stk.levels[1]},${this.stk.levels[2]});"> ${this.name} </b>`
     }
 
-    /** Gets the value of Armor Class from the object used to calculate it
+    /** Gets the value of Armor Class from the object used to calculate it.
      * {base : Integer, ability : AbilityScore.bonus, maximum : Integer, bonus : Integer } */
     getArmorClass()
     {
-
         if(Number.parseInt(this.armorClass) ){
             return this.armorClass;
+        }
+        if(!this.armorClass.bonus)
+        {
+            this.armorClass.bonus = 0;
         }
         let ac = this.armorClass;
         if(ac.base)
@@ -207,29 +209,46 @@ class Troop
             let modifier = 0;
             if(ac.ability)
             {
-                modifier = this.abilityScores[ac.ability].bonus;
+                if(ac.ability.includes(", "))
+                {
+                    let ab = ac.ability.split(", ");
+                    for(let i = 0; i < ab.length; i++)
+                    {
+                        modifier += this.abilityScores[ab[i]].bonus
+                    }
+                }
+                else 
+                {
+                    modifier = this.abilityScores[ac.ability].bonus;
+                }
                 if(ac.maximum && modifier > ac.maximum)
                 {
                     modifier = ac.maximum;
                 }
             }
-
-            return ac.base + modifier + this.armorClass.bonus;
+            return ac.base + modifier + ac.bonus;
         }
     }
     
-    /** Tells if the Troop possesses an action with key filter == value
+    /** Tells if the Troop possesses an action with key filter == value. TODO : see about returning a clone()
      * @param {String} filter : checks for action[filter]
      * @param {String} value : checks action[filter] == value
+     * @param {Boolean} returnIndex : flag to return the Index of the Action instead of the object's pointer.
      * @returns {Boolean} has the troop got the action ?*/
-    hasAction(filter, value)
+    hasAction(filter, value, returnIndex)
     {
         for(let i = 0; i < this.actions.length; i++)
         {
-            if(!value && this.actions[i][filter])
-                return true
+            if(value === undefined && (filter in this.actions[i]) )
+            { 
+                return this.actions[i]
+            }
             else if(this.actions[i][filter] == value)
-                return true;
+            {
+                if(returnIndex)
+                    return i;
+                return this.actions[i];
+            }
         }
         return false;
     }
@@ -243,11 +262,11 @@ class Troop
     {
         for(let i = 0; i < this.conditions.length; i ++)
         {
-            if(value === undefined && this.conditions[i][filter] !== undefined)
+            if(value == undefined && this.conditions[i][filter] != undefined)
             {
                 return this.conditions[i][filter];
             }
-            if (this.conditions[i][filter] == value)
+            if(this.conditions[i][filter] == value)
             {
                 if(removeFlag)
                 {
@@ -280,42 +299,201 @@ class Troop
         return ret;
     }
 
-    hasModifier(filter, value)
+    /** Equipment Management : WIP. Applies and Removes modifiers from the Equipment object. */
+    getModifiersArray()
     {
-        for(let i = 0; i < this.modifiers.length; i++)
+        let arr = [];
+        for(let key in this.equipment)
         {
-            let modifier = this.modifiers[i];
-            if(!value)
+            if(this.equipment[key].modifiers)
             {
-                if(modifier[filter])
+                for(let i = 0; i < this.equipment[key].modifiers.length; i++)
                 {
-                    return modifier;
-                } 
-            }
-            else
-            {
-                if(modifier[filter] == value)
-                    return modifier;
+                    this.equipment[key].modifiers[i].slot = key;
+                    arr.push(this.equipment[key].modifiers[i]);
+                }
             }
         }
+        arr = arr.sort((a, b) => {return a.type.length - b.type.length; } );
+        return arr;
     }
-
-    resetModifiers()
+    applyEquipment()
     {
-        for(let i = 0; i < this.modifiers.length; i++)
+        let mods = this.getModifiersArray();
+        for(let i = 0; i < mods.length; i++)
         {
-            let modifier = this.modifiers[i];
-            if(modifier.type == "abilityScore")
-            {
-                this.abilityScores[""]
-            }
+            let mod = mods[i];
+            this.applyModifier(mod, mod.slot);
         }
     }
-    applyModifier(modifier, negateFlag)
+    removeEquipment()
+    {
+        let mods = this.getModifiersArray();
+        for(let i = mods.length -1; i >= 0; i--)
+        {
+            let mod =  mods[i];
+            this.removeModifier(mod, mod.slot);
+        }
+    }
+    applyModifier(modifier, slot)
     {
         switch (modifier.type)
         {
+            case "size":
+                this.dimension = getDimensionFromSizeCategory(modifier.value);
+                break;
+            case "speed":
+                this.speed = modifier.value;
+                break;
+            
+            case "initiativeBonus":
+                this.initiativeBonus += modifier.value;
+                break;
 
+            case "abilityScoreIncrease" :
+                this.abilityScores[modifier.key].score += modifier.value;
+                this.abilityScores[modifier.key].bonus = floor( (this.abilityScores[modifier.key].score - 10) / 2 );
+                break;
+
+            case "armorClass" : 
+                for(let key in modifier.value)
+                {
+                    this.armorClass[key] = modifier.value[key]
+                }
+                break;
+
+            case "armorClassBonus" :
+                if(this.armorClass.bonus === undefined)
+                {
+                    this.armorClass.bonus = 0;
+                }
+                this.armorClass.bonus += modifier.value;
+                break;
+
+            case "hitDieIncrease" :
+                this.hitPoints.dieType += 2;
+                break;
+
+            case "hitDieAmount" :
+                this.hitPoints.dieAmount ++;
+                break;
+
+            case "hitPointMaximum":
+                this.hitPoints.bonus += this.hitPoints.dieAmount;
+                break;
+                
+            case "actionMod" :
+                for(let a = 0; a < this.actions.length; a++)
+                {
+                    for(let key in modifier.filter)
+                    {
+                        if((key == "name" && this.actions[a][key] && this.actions[a][key].includes(modifier.filter[key])) || 
+                            (key != "name" && this.actions[a][key] && this.actions[a][key] == modifier.filter[key] ))
+                        {
+                            for(let modKey in modifier.value)
+                            {
+                                if(this.originalData["actions"] === undefined)
+                                    this.originalData["actions"] = {};
+
+                                this.originalData["actions"][a] = {};
+                                this.originalData["actions"][a]= clone(this.actions[a]);
+
+                                this.actions[a][modKey] = modifier.value[modKey]
+                            }
+                        }
+                    }
+                } 
+                break;
+
+            case "action" :
+                if(!slot || (modifier.value.name.includes("(Two-Handed)") && slot == "Both Hands") || (!modifier.value.name.includes("(Two-Handed)") && slot != "Both Hands"  ))
+                {
+                    let act = new Action(modifier.value);
+                    this.actions.push(act.clone());
+                }
+                break;
+            case "condition" :
+                this.conditions.push(modifier.value);
+                break;
+            case "pool" :
+                for(let key in modifier.value)
+                {
+                    if(!this.pools[key])
+                        this.pools[key] = 0;
+                    this.pools[key] += modifier.value[key];
+                }
+                break;
+        }
+    }
+    removeModifier(modifier)
+    {
+        switch (modifier.type)
+        {
+            case "size":
+                this.dimension = getDimensionFromSizeCategory(this.fluffData.size);
+                break;
+            case "speed":
+                this.speed = this.originalData["speed"];
+                break;
+            case "initiativeBonus":
+                this.initiativeBonus = this.abilityScores["Dexterity"].bonus;
+                break;
+            case "abilityScoreIncrease" :
+                this.abilityScores[modifier.key].score -= modifier.value;
+                this.abilityScores[modifier.key].bonus = floor( (this.abilityScores[modifier.key].score - 10) / 2 );
+                break;
+
+            case "armorClass" : 
+                this.armorClass = this.originalData["armorClass"];
+                break;
+
+            case "armorClassBonus" :
+                if(this.armorClass.bonus)
+                    this.armorClass.bonus -= modifier.value;
+                break;
+
+            case "hitDieIncrease" :
+                this.hitPoints.dieType -= 2;
+                break;
+
+            case "hitDieAmount" :
+                this.hitPoints.dieAmount --;
+                break;
+
+            case "hitPointMaximum":
+                this.hitPoints.bonus -= this.hitPoints.dieAmount;
+                break;
+
+            case "actionMod" :
+                for(let a = 0; a < this.actions.length; a++)
+                {
+                    if(this.originalData["actions"] && this.originalData["actions"][a])
+                    {
+                        let act = new Action(this.originalData["actions"][a]);
+                        for(let key in act)
+                        {
+                            this.actions[a][key]= act[key];
+                        }
+                    }
+                } 
+                break;
+
+            case "action" :
+                let index = this.hasAction("name", modifier.value.name, true)
+                if(this.actions[index]){
+                    this.actions.splice(index,1);
+                }
+                break;
+            case "condition" :
+                this.hasCondition("name", modifier.value.name, true)        
+                break;
+            case "pool" :
+                for(let key in modifier.value)
+                {
+                    if(this.pools[key])
+                        this.pools[key] = undefined;
+                }
+                break;
         }
     }
 
@@ -353,10 +531,16 @@ class Troop
      *  Resets movement and applies conditions.  */
     startTurn( areas )
     {
+        if(!this.hasCondition("name", "Unconcious"))
+            logs(`${this.getHTMLName()} starts its turn.`);   
+
         this.actionsTaken = 0;
         for(let key in this.originalData)
         {
-            this[key] = this.originalData[key];
+            if(key !== "hitPoints")
+            {
+                this[key] = this.originalData[key];
+            }
         }
         this.resistances = "";
         this.vulnerabilities = "";
@@ -369,8 +553,6 @@ class Troop
 
         this.resetConditions();
         this.applyConditions(areas);
-
-        logs(`${this.getHTMLName()} starts its turn.`);        
         this.movement = this.speed;
     }
 
@@ -450,7 +632,7 @@ class Troop
                         if(damage > 0)
                             logs(`${game.initiativeOrder[t].getHTMLName()} looses <b style="color:rgb(200,20,20);"> ${damage} </b> hit points for being within ${this.getHTMLName()}'s ${c.name}.`, c.isLogged)
                         else
-                            logs(`${game.initiativeOrder[t].getHTMLName()} regains <b style="color:rgb(20,200,20);">${-damage} </b> hit points for being within ${this.getHTMLName()}'s ${c.name}.`, c.isLogged)
+                            logs(`${game.initiativeOrder[t].getHTMLName()} regains <b style="color:rgb(20,200,20);"> ${-damage} </b> hit points for being within ${this.getHTMLName()}'s ${c.name}.`, c.isLogged)
                     })
                 }
                 // If we have a condition that deals damage / heals at the start of each turn.
@@ -460,7 +642,7 @@ class Troop
                     if(damage > 0)
                         logs(`${this.getHTMLName()} looses <b style="color:rgb(200,20,20);"> ${damage}</b> hit points for being ${c.name}.`, c.isLogged)
                     else
-                        logs(`${this.getHTMLName()} regains <b style="color:rgb(20,200,20);">${-damage} hit points for being ${c.name}.`, c.isLogged)
+                        logs(`${this.getHTMLName()} regains <b style="color:rgb(20,200,20);"> ${-damage} </b> hit points for being ${c.name}.`, c.isLogged)
                 }
             }
         }
@@ -501,11 +683,10 @@ class Troop
         // Modifies the AC of the Troop (i.e. Shield of Faith spell, Parry reaction, etc.). acBonus is a *terrible* name.
         if(c.acBonus)
         {
-            logs(`${this.getHTMLName()} has an Armor Class of ${this.armorClass + c.acBonus}.`, c.isLogged);
-            if(!this.armorClass.bonus)
-                this.armorClass.bonus = 0;
-            
-            this.armorClass.bonus += Number.parseInt(c.acBonus)
+            logs(`${this.getHTMLName()} has an Armor Class of ${this.getArmorClass() + c.acBonus}.`, c.isLogged);
+            console.log(this.originalData["armorClass"], this.armorClass)
+            this.originalData["armorClass"] = clone(this.armorClass);
+            this.armorClass.bonus += Number.parseInt(c.acBonus);
         }
         // Adds some bonus to damage rolls
         if(c.damageBonus)
@@ -521,13 +702,17 @@ class Troop
         if(c.charm)
         {
             logs(`${this.getHTMLName()} is ${c.name} and joins ${c.charm}`, c.isLogged);
-            this.isPlayer = c.charm;
+            this.isPlayer = c.charm.isPlayer;
+            this.stk = c.charm.stk;
+            this.isAI = c.charm.isAI;
         }
         // "Some Pool Name, 1" will add 1 unit to the Some Pool Name pool of actions. Used for Loading Crossbow.
         if(c.recharge)
         {
             let r = c.recharge.split(", ");
             this.pools[r[0]] += Number.parseInt(r[1]);
+            logs(`${this.getHTMLName()} has ${c.name}`, c.isLogged);
+
         }
         // Advantage and Disadvantage Conditions => See rollToHit function
         // Reckless Attack, Help, Dodge and so on...
@@ -547,6 +732,7 @@ class Troop
         {
             logs(`Attack rolls targeting ${this.getHTMLName()} have disadvantage.`, c.isLogged);
         }
+        this.checkHitPoints();
         return false;
     }
 
@@ -564,6 +750,7 @@ class Troop
             }
         }
     }
+
     /**Reset the value of a key for condition */
     setConditionValue(conditionName, key, value)
     {
@@ -573,8 +760,6 @@ class Troop
             if(this.conditions[i].name == conditionName)
             {
                 this.conditions[i][key] = value;
-                console.log(conditionName, key, value)
-
             }
         }
     }
@@ -657,6 +842,13 @@ class Troop
                 logs(`${target.getHTMLName()} regains  ${-d} hit points ${action.name}.`);
             }
 
+            // Vampiric action, speaks for itself
+            if(action.isVampiric)
+            {
+                this.hitPoints.current += d;
+                this.checkHitPoints();
+            }
+
             target.hitPoints.current -= d;
             
             // Deal the Action's Condition to the target
@@ -670,12 +862,22 @@ class Troop
      * Deals condition for a given action */
     dealCondition( condition, target )
     {
+        if(condition && condition.notDealt == "applyToSelfInstead")
+        {
+            let a = clone(condition);
+            let conditionSave = target.rollSave({saveAbility : condition.save, saveDC : condition.saveDC});
+            if(!conditionSave)
+            {
+                a.save = undefined;
+                this.applyCondition(a);
+            }
+        }
         if(condition && !condition.notDealt)
         {
             condition = clone(condition);
             if(condition.charm == true)
             {
-                condition.charm = this.isPlayer;
+                condition.charm = this;
             }
             if(!condition.save)
                 condition.save = "None";
@@ -729,7 +931,6 @@ class Troop
         return damage;
     }
 
-
     /** Rolls a saving throw an incomming attack or condition
      * @param {action} : {saveAbility - the involved ability score, saveDC - only here for show}
      * @returns {boolean} : the roll's success against action.saveDC.Z*/
@@ -772,14 +973,15 @@ class Troop
     rollToHit( action, target )
     {
         let roll;
-        if(action.toHit !== undefined && action.toHit !== "None")
+        if(action.toHit !== undefined)
         {
             // Roll the actual dice
             roll = floor(random() * 20) + 1;
             // Reroll if conditions are met
-            if(this.hasCondition("rerollHit"))
+            let a = this.hasCondition("rerollHit");
+            if(a && a instanceof String)
             {
-                this.hasCondition("rerollHit").split(", ").forEach(d => {
+                a.split(", ").forEach(d => {
                     if(roll == d)
                     {
                         let reroll = floor(random() * 20) + 1;
@@ -796,7 +998,6 @@ class Troop
             }
             else if(!action.toHitExtra)
             {
-
                 logs(`  ${this.getHTMLName()} rolls to Hit for ${action.name}. 
                 (${roll}) + ${this.abilityScores[action.toHit].bonus + this.toHitBonus} = ${roll + this.abilityScores[action.toHit].bonus + this.toHitBonus}`); 
                 roll += this.abilityScores[action.toHit].bonus + this.toHitBonus;
@@ -826,6 +1027,8 @@ class Troop
         return roll;
     }
     
+    /** rollToHit Helper
+     * Applies the various conditions (on this and on target) that could grant/cancel advantage to the roll.  */
     applyAdvantage(action, roll, target)
     {
         let ret = roll;
@@ -894,7 +1097,7 @@ class Troop
             return damage;
 
         // If action.damage is not a roll but a Number
-        if(action.damage.toString().match(/^[0-9]$/) !== null)
+        if(action.damage.toString().match(/^-?[0-9]$/) !== null)
             return action.damage;
         
         
@@ -914,10 +1117,13 @@ class Troop
         for(let i = 0; i < dieAmount; i++)
         {
             let die = floor(random() * dieType) + 1;
+
             // Reroll if conditions are met
             if(action.condition && action.condition["rerollDamage"]) // GENERALIZE THIS SHHH, MATE.
             {
-                action.condition["rerollDamage"].split(", ").forEach(d => {
+                let rr = action.condition["rerollDamage"].toString();
+
+                rr.split(", ").forEach(d => {
                     if(die == d)
                     {
                         let reroll = floor(random() * dieType) + 1;
@@ -934,22 +1140,22 @@ class Troop
         }
 
         // Add the bonuses
-        if(action.damageAbility && action.damageAbility != "None" && action.damageExtra)
+        if(action.damageAbility !== undefined && action.damageAbility !== "None")
         {
-            dLog += `+ ${this.abilityScores[action.damageAbility].bonus + action.damageExtra + this.damageBonus} =`
-            roll += this.abilityScores[action.damageAbility].bonus + action.damageExtra + this.damageBonus;
+            dLog += `+ ${this.abilityScores[action.damageAbility].bonus}`
+            roll += this.abilityScores[action.damageAbility].bonus;
         }
-        else if(action.damageAbility && action.damageAbility != "None")
+        if(action.damageExtra !== undefined)
         {
-            dLog += `+ ${this.abilityScores[action.damageAbility].bonus + this.damageBonus} =`
-            roll += this.abilityScores[action.damageAbility].bonus + this.damageBonus;
+            dLog += `+ ${action.damageExtra}`
+            roll += action.damageExtra;
         }
-        else if(!action.damageAbility || action.damageAbility == "None" && action.damageExtra)
+        if(this.damageBonus !== undefined && this.damageBonus !== 0)
         {
-            dLog += `+ ${action.damageExtra + this.damageBonus} =`
-            roll += action.damageExtra + this.damageBonus;
+            dLog += `+ ${this.damageBonus}`
+            roll += this.damageBonus;
         }
-        dLog += `${roll}`;
+        dLog += ` = ${roll}`
         
         // Don't display log for d1's => Doesn't really apply no more.
         if(dieType !== 1)
@@ -980,7 +1186,7 @@ class Troop
         return ret;
     }
 
-    /** Allows to know whether a troop is allowed to move at the given position on the map => TO BE REMOVED */
+    /** Returns whether a Troop is allowed to move at the given position on the map => TO BE REMOVED IN FAVOR OF CAMERA METHOD */
     intersects( position, otherTroops, areas )
     {
         // Intersecting
@@ -1024,7 +1230,7 @@ class Troop
         return flag;
     }
 
-    /** Changes troop position to the given position on the map */
+    /** Changes Troop position to the given position on the map */
     move( position )
     {
         let distance = floor(position.copy().dist( createVector(this.position.x, this.position.y) ));
@@ -1036,6 +1242,10 @@ class Troop
     }
 }
 
+
+/** Action & Condition helper classes. Used for quick parsing and description of the Action & Condition anonymous objects.
+ * In order to be useable objects in the game, we need the ability to Clone and toJSON them. 
+ * It *would* really help to do that and refactor the hell out of this file.  */
 class Action
 {
     constructor(args)
@@ -1083,8 +1293,20 @@ class Action
             }
         }
     }
-    describe()
+    clone()
     {
+        let a ={}; 
+        for(let key in this)
+        {
+            a[key] = this[key];
+        }
+        return a;
+    }
+    describe(ignoreCondition)
+    {
+        if(ignoreCondition)
+            return `${this.describeTarget()}${this.describeSuccess()} ${this.describeDamage()} ${this.describeUses()}`
+
         return `${this.describeTarget()}${this.describeSuccess()} ${this.describeDamage()} ${this.describeUses()}${this.describeCondition()}`
     }
     describeTarget()
@@ -1097,18 +1319,18 @@ class Action
                 break;
             case "Enemy":
                 if(this.areaEffect < 10)
-                    ret += `Target an Enemy creature within range (${this.reach / 100} meters).`
+                    ret += `Target an Enemy creature within range (${this.reach / 100} meters). `
                 else
-                    ret += `Target all Enemy creatures in a ${(this.areaEffect / 100)} meters area around a point within range (${this.reach / 100} meters).`
+                    ret += `Target all Enemy creatures in a ${(this.areaEffect / 100)} meters area around a point within range (${this.reach / 100} meters). `
                 break;
             case "Ally":
                 if(this.areaEffect < 10)
-                    ret += `Target an Ally creature within range (${this.reach / 100} meters).`
+                    ret += `Target an Ally creature within range (${this.reach / 100} meters). `
                 else
-                    ret += `Target all Ally creatures in a ${(this.areaEffect / 100)} meters area around a point within range (${this.reach / 100} meters).`
+                    ret += `Target all Ally creatures in a ${(this.areaEffect / 100)} meters area around a point within range (${this.reach / 100} meters). `
                 break;
             case "Point":
-                ret += `Target all creatures in a ${(this.areaEffect / 100)} meters area around a point within range (${this.reach / 100} meters).`
+                ret += `Target all creatures in a ${(this.areaEffect / 100)} meters area around a point within range (${this.reach / 100} meters). `
         }
         return ret;
     }
@@ -1126,6 +1348,13 @@ class Action
                 else
                     ret+= `to the roll. `
             }
+            else
+            {
+                if(this.toHitExtra)
+                    ret+= `You add ${this.toHitExtra} to the roll. `;
+                else
+                    ret+= `You don't add any bonus to the roll.`
+            } 
         }
         if(this.saveAbility !== undefined && this.saveAbility !== "None")
         {
@@ -1162,7 +1391,7 @@ class Action
     describeUses()
     {
         let ret = ``;
-        if(this.uses == "-1")
+        if(this.uses == "-1" && !this.pool)
         {
             ret += `You can use this action once per turn. `;
         }
@@ -1175,17 +1404,21 @@ class Action
             if(this.expandsPool)
                 ret += `You must expand one of your ${this.pool}. `
             else
-                ret += `You must have one of your ${this.pool}. `
+                ret += `You must have a ${this.pool}. `
         }
-        if(this.useCost)
+        if(this.addCost)
         {
-            ret += `Using this Action costs ${this.useCost} actions instead of 1.`;
+            ret += `Using this Action costs ${this.addCost} actions instead of 1.`;
         }
         return ret;
     }
     describeCondition()
     {
         let ret = ``;
+        if(this.isVampiric)
+        {
+            ret += `You recuperate the amount of damage dealt by this Action.`; 
+        }
         if(this.condition)
         {
             ret += `This Action gives the condition ${this.condition.name}. `
@@ -1196,7 +1429,6 @@ class Action
         return ret;
     }
 }
-
 class Condition
 {
     constructor(args)
@@ -1225,6 +1457,16 @@ class Condition
             }
         }
     }
+    
+    clone()
+    {
+        let a ={}; 
+        for(let key in this)
+        {
+            a[key] = this[key];
+        }
+        return a;
+    }
     describe()
     {
         let ret = ``;
@@ -1234,7 +1476,7 @@ class Condition
             ret += `The target makes a ${this.save} saving throw (Difficulty : ${this.saveDC}) to stop the Condition at the start of each of their turns. `; // Make sure we don't apply the thing.
         }
         //Duration
-        if(this.duration !== -1 && this.duration !== 0)
+        if(this.duration !== -1 && this.duration !== 0 && !this.notDealt)
         {
             ret += `This condition has a duration of ${this.duration} turns. `;
         }
@@ -1244,7 +1486,7 @@ class Condition
         }
         if(this.duration == -1)
         {
-            ret += `This condition doesn't end over time. `
+            ret += `This condition is applied at the start of each turn of combat. `
         }
         // Apply Damage if given (includes healing and Aura Effects for damage)
         if(this.damage && Number.parseInt(this.damage) != 0)
@@ -1257,18 +1499,18 @@ class Condition
         // Condition modifies our movement speed (i.e. Difficult Terrain/ Expeditous Retreat Spell)
         if(this.moveMod)
         {
-            ret += `The target's speed is modified by a factor of ${this.moveMod}. `;
+            ret += `The target's speed is modified by a factor of ${this.moveMod * 100}%. `;
         }
         // Condition gives us Resistances, Vulnerabilities or Immunities
         if(this.resistances)
         {
             let txt = this.resistances.slice(0, this.resistances.length - 2);
-            ret += `The target gains resistance to ${txt} damage types.`;
+            ret += `The target gains resistance to ${txt} damage types. `;
         }
         if(this.vulnerabilities)
         {
             let txt = this.vulnerabilities.slice(0, this.vulnerabilities.length - 2);
-            ret += `The target suffers vulnerability to $txt} damage types.`;
+            ret += `The target suffers vulnerability to ${txt} damage types. `;
         }
         if(this.immunities)
         {
@@ -1316,11 +1558,11 @@ class Condition
         if(this.recharge)
         {
             let values = this.recharge.split(", ")
-            ret += `The target regains ${values[1]} unit of their ${values[0]}.`;
+            ret += `The target regains ${values[1]} unit of their ${values[0]}. `;
         }
         if(this.rerollHit)
         {
-            ret += `The target can reroll the attack roll if they rolled a ${this.rerollHit} on their initial roll. This is applied before any advantage / disadvantage.` 
+            ret += `The target can reroll the attack roll if they rolled a ${this.rerollHit} on their initial roll. This is applied before any advantage / disadvantage. ` 
         }
 
         // Advantage and Disadvantage Conditions => See rollToHit function
@@ -1331,75 +1573,28 @@ class Condition
         }
         if(this.advantageTarget)
         {
-            ret += `The target suffers disadvantage on attack rolls. `;
+            ret += `Attack rolls against the target have advantage. `;
         }
         if(this.disadvantageHit)
         {
-            ret += `Attack rolls against the target have disadvantage. `;
+            ret += `The target suffers disadvantage on attack rolls.`;
         }
         if(this.disadvantageTarget)
         {
-            ret += `Attack rolls against the target have advantage. `;
+            ret += `Attack rolls against the target have disadvantage. `;
         }
         if(this.saveAdvantage)
         {
             ret += `The target has advantage against ${this.saveAdvantage} saving throws. `
         }
+        if(this.saveDisadvantage)
+        {
+            ret +=  `The target suffers disadvantage against ${this.saveDisadvantage} saving throws. `
+        }
+        if(this.evade)
+        {
+            ret += `If the target makes a ${this.evade} saving throw to reduce damage and succeeds, takes no damage. If the target fails the save, it takes half damage. ` 
+        }
         return ret;
-    }
-}
-
-class Modifier
-{
-    constructor(args)
-    {
-        for(let key in args)
-        {
-            this[key] = args[key];
-        }
-    }
-
-    applyTo(troop, negateFlag)
-    {
-        switch (this.type)
-        {
-            case "abilityScore" :
-                if(negateFlag)
-                {
-                    troop.abilityScores[this.key].modifiers -= Number.parseInt(this.value);
-                }
-                else
-                {
-                    troop.abilityScores[this.key].modifiers += Number.parseInt(this.value);
-                }
-                break;
-            case "size" :
-                if(negateFlag)
-                {
-                    troop.dimension = this.getDimensionFromSizeCategory(this.value);
-                }
-                else
-                {
-                    troop.dimension = this.getDimensionFromSizeCategory(this.value);
-                }
-                break;
-            case "armorClass" :
-                character.armorClass = {"base" : modifier.value.base, "ability" : modifier.value.ability};
-                break;
-            case "speed" :
-                character.speed = modifier.value;
-                break;
-            case "pool" : 
-                let p = getPoolWithModifier(modifier.value);
-                character.pools[p.key] = p.value;
-                break;
-            case "action" :
-                character.actions.push(modifier.value);
-                break;
-            case "condition" :
-                character.conditions.push(modifier.value);
-                break;
-        
-        }
     }
 }
