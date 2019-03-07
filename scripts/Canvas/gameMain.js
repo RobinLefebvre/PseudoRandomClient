@@ -128,6 +128,7 @@ function draw()
         camera.displaySimpleOverlay();
     }
 }
+
 function manageMapMeasurement()
 {
     // CTRL button pressed => Display measurement between a point and your mouse position

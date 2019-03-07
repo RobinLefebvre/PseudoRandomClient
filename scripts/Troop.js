@@ -19,17 +19,10 @@ class Troop
         if(args.stk)
         {
             this.stk = {};
-            this.originalData["stk"] = {};
-
-            if(args.stk.levels)
+            if(args.stk)
             {
-                this.stk.levels = args.stk.levels;
-                this.originalData["stk"].levels = args.stk.levels;
-            }
-            if(args.stk.r)
-            {
-                this.stk.levels = [args.stk.r,args.stk.g, args.stk.b, args.stk.a];
-                this.originalData["stk"].levels = [args.stk.r,args.stk.g, args.stk.b, args.stk.a];
+                this.stk = args.stk;
+                this.originalData["stk"] = args.stk;
             }
         }
         
@@ -189,7 +182,7 @@ class Troop
     /** Returns an HTML element with the name of the Troop with coloring */
     getHTMLName()
     {
-        return `<b style="color:rgb(${this.stk.levels[0]},${this.stk.levels[1]},${this.stk.levels[2]});"> ${this.name} </b>`
+        return `<b style="color:${this.stk};"> ${this.name} </b>`
     }
 
     /** Gets the value of Armor Class from the object used to calculate it.

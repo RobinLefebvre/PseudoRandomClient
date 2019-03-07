@@ -19,7 +19,6 @@ function writeGameTab()
 {
     document.querySelector(`#gameTab`).innerHTML = `<p> Local Game</p>
     <select id="encounter" onchange="game = {initiativeOrder: []}; writeGame(this.value); " > </select> 
-
     <p> Play As</p>       
     <select id="group" onchange="switchPlayer(this.value);"> <option value="---"> --- </option> </select> 
     <hr/>
@@ -54,10 +53,10 @@ function writeGame(id)
         game.areas = [];
         data.areas.forEach(a => 
         {
-            if(a.coloration.levels)
-                a.coloration = color(a.coloration.levels[0], a.coloration.levels[1], a.coloration.levels[2]);
-            if(a.stk.levels)
-                a.stk = color(a.stk.levels[0], a.stk.levels[1], a.stk.levels[2]);
+            if(a.coloration)
+                a.coloration = color(a.coloration);
+            if(a.stk)
+                a.stk = color(a.stk);
             a.shape = JSON.parse(a.shape);
             game.areas.push(a);
         })
@@ -90,7 +89,7 @@ function writeGame(id)
             else
             {
                 elt += `<option value="${group.name}" > ${group.name} </option>`;
-                logs(` Adding <b style="color:rgb(${group.color.levels[0]}, ${group.color.levels[1]},${group.color.levels[2]});"> ${group.name} </b>`)
+                logs(` Adding <b style="color:${group.color};"> ${group.name} </b>`)
                 group.troops.forEach(troop =>
                 {
                     troop.isPlayer = group.name;
@@ -146,7 +145,7 @@ function writeGameOrder(a)
         if(t.hasCondition("name", "Unconcious"))
             unc = ` ( Unconcious ) `;
 
-        tElt += `<div id="troop${i}" onclick="camera.setAnchor(game.initiativeOrder[${i}]);" onmouseout="focussedTroop = undefined;" onmouseover="focussedTroop = game.initiativeOrder[${i}];" style="cursor:pointer; font-size: 1rem; padding:0.5rem; padding-left:2rem; border-radius:2rem; background-color: rgba(0,0,0,0.7); color:rgb(${t.stk.levels[0]}, ${t.stk.levels[1]}, ${t.stk.levels[2]});" > ${t.name} - ${unc} </div>`
+        tElt += `<div id="troop${i}" onclick="camera.setAnchor(game.initiativeOrder[${i}]);" onmouseout="focussedTroop = undefined;" onmouseover="focussedTroop = game.initiativeOrder[${i}];" style="cursor:pointer; font-size: 1rem; padding:0.5rem; padding-left:2rem; border-radius:2rem; background-color: rgba(0,0,0,0.7); color:${t.stk};" > ${t.name} - ${unc} </div>`
     }
     for(let i = 0; i < game.currentIndex; i++)
     {
@@ -154,7 +153,7 @@ function writeGameOrder(a)
         let unc = ` ( ${t.hitPoints.current} / ${t.hitPoints.maximum} )`
         if(t.hasCondition("name", "Unconcious"))
             unc = ` ( Unconcious ) `
-        tElt += `<div id="troop${i}" onclick="camera.setAnchor(game.initiativeOrder[${i}]);" onmouseout="focussedTroop = undefined;" onmouseover="focussedTroop = game.initiativeOrder[${i}];" style="cursor:pointer; font-size: 1rem; padding:0.5rem; padding-left:2rem; border-radius:2rem; background-color: rgba(0,0,0,0.7); color:rgb(${t.stk.levels[0]}, ${t.stk.levels[1]}, ${t.stk.levels[2]});" > ${t.name} - ${unc} </div>`
+        tElt += `<div id="troop${i}" onclick="camera.setAnchor(game.initiativeOrder[${i}]);" onmouseout="focussedTroop = undefined;" onmouseover="focussedTroop = game.initiativeOrder[${i}];" style="cursor:pointer; font-size: 1rem; padding:0.5rem; padding-left:2rem; border-radius:2rem; background-color: rgba(0,0,0,0.7); color:${t.stk};" > ${t.name} - ${unc} </div>`
     }
     elt.innerHTML = tElt;
     document.querySelector("#page_content").append(elt);

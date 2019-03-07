@@ -33,7 +33,6 @@
 #gameTab p{ padding-left:1rem; }
 #gameTab input{ width:90%; padding:0; padding-left:5%; padding-top:0.5rem; padding-bottom:0.5rem; border:none; background-color:rgba(0,0,0,0.7); }
 
-
 #turnTab
 {
     cursor : default; 

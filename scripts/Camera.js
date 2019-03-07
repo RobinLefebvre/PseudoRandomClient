@@ -2,7 +2,7 @@ class Camera
 {
     constructor(anchor)
     {
-        ellipseMode(RADIUS); // Call the p5.js function, insuring that all the ellipses we draw are correctly setup. 
+        ellipseMode(RADIUS); // Call the p5.js function, insuring that all the ellipses we draw are correctly setup.
         /** Disable Context Menu  : Just so we can drag the Camera around*/
         document.oncontextmenu = function(event){if(event.preventDefault != undefined){event.preventDefault();}if(event.stopPropagation != undefined){event.stopPropagation();};}
 
@@ -299,16 +299,16 @@ class Camera
             }
 
             let str;
-            if(entity.stk.levels)
-                str = color(entity.stk.levels[0], entity.stk.levels[1], entity.stk.levels[2], entity.stk.levels[3] )
+            if(entity.stk)
+                str = color(entity.stk)
             if(!str)
                 str = color(250, 250, 250, 150);
             strokeWeight(3);
             stroke(str);
 
             let c;
-            if(entity.coloration.levels)
-                c = color(entity.coloration.levels[0],entity.coloration.levels[1],entity.coloration.levels[2], entity.coloration.levels[3]);
+            if(entity.coloration)
+                c = color(entity.coloration);
             else
                 c = color(0, 0, 0, 150);
             fill(c);
@@ -327,16 +327,14 @@ class Camera
     displayArea(area, ignoreSize, ignoreSizeName)
     {
         if(area.stk)
-            stroke( color(area.stk.levels[0], area.stk.levels[1], area.stk.levels[2], area.stk.levels[3] ))
+            stroke( color(area.stk) )
         else
             noStroke();
             
-        let c;
-        if(area.coloration.levels)
-            c = color(area.coloration.levels[0], area.coloration.levels[1], area.coloration.levels[2], area.coloration.levels[3])
+        if(area.coloration)
+            fill( color(area.coloration) );
         else
-            c = color(0,0,0,150);
-        fill(c);
+            fill( color(0,0,0,255) )
 
         if(area.shape)
         {
@@ -400,7 +398,7 @@ class Camera
         {
             if(frameCount % area.animatedColor == 0)
             {
-                area.nextColor = color(random(255), random(255), random(255), area.coloration.levels[3])
+                area.nextColor = color(random(255), random(255), random(255))
             }
             else if (area.nextColor)
             {
@@ -492,7 +490,7 @@ class Camera
         ellipse(pos.x, pos.y, dim.x - 3, dim.y - 3 );
         if(stk)
         {
-            stroke(stk.levels[0], stk.levels[0], stk.levels[0]);
+            stroke(color(stk));
             ellipse(pos.x, pos.y, dim.x + 3, dim.y + 3);
         }
 
@@ -571,8 +569,10 @@ class Camera
         {
             let pos = this.mapPointToScreenPoint(troop.position.x, troop.position.y);
             let dim = this.mapDimensionsToScreen(troop.movement, troop.movement);
-            let col = color(troop.stk.levels[0],troop.stk.levels[1],troop.stk.levels[2], 50);
-            fill(col);
+            let col = color(troop.stk);
+            col.levels[3] = 50;
+            stroke(255);
+            fill(col.levels);
             ellipse(pos.x, pos.y, dim.x, dim.y);
     
             if(otherTroops && areas)
@@ -589,6 +589,7 @@ class Camera
                         fill(0,250,0,70);
     
                     let tDim = this.mapDimensionsToScreen(troop.dimension.x, troop.dimension.y)
+                    noStroke();
                     ellipse(mouseX, mouseY, tDim.x, tDim.y);
                     stroke(col);
                     line(mouseX, mouseY, pos.x, pos.y);
@@ -602,7 +603,7 @@ class Camera
     {
         let pos = this.mapPointToScreenPoint(troop.position.x, troop.position.y);
         let dim = this.mapDimensionsToScreen(troop.dimension.x + action.reach, troop.dimension.y + action.reach) ;
-        let col = color(troop.stk.levels[0],troop.stk.levels[1],troop.stk.levels[2], 250);
+        let col = color(troop.stk);
 
         let aoe = this.mapDimensionsToScreen(action.areaEffect, action.areaEffect);
         if(createVector(mouseX, mouseY).dist(pos) <= dim.x)

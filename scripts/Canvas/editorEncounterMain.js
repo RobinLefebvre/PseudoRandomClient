@@ -106,8 +106,7 @@ function loadEncounter(id)
             groups[group] = {};
             groups[group].name = g.name;
             groupsName[group] = g.name;
-            groups[group].color = {};
-            groups[group].color.levels = color(g.color).levels;
+            groups[group].color = g.color;
             groups[group].troops = [];
             g.troops.forEach(troop =>
             {
@@ -119,15 +118,13 @@ function loadEncounter(id)
 
         for(let group in data.groups)
         {
-            let groupColor = rgbToHex(groups[group].color.levels[0], groups[group].color.levels[1], groups[group].color.levels[2]);
-            document.querySelector(`#color${group}`).value = groupColor;
+            document.querySelector(`#color${group}`).value = groups[group].color;
         }
 
         areas = [];
         for(let i = 0; i < data.areas.length; i++)
         {
             let area = data.areas[i];
-            area.coloration = color(area.coloration.levels[0], area.coloration.levels[1], area.coloration.levels[2], area.coloration.levels[3] );
             area.shape = JSON.parse(area.shape);
             areas.push(area);
         }
@@ -147,7 +144,7 @@ function saveEncounter(json)
     {
         let area = {};
         area.name = a.name;
-        area.coloration = {levels : a.coloration.levels};
+        area.coloration = a.coloration;
         for(let i = 0; i < a.shape.length; i++){a.shape[i] = {x : a.shape[i].x, y:a.shape[i].y} }
         area.shape = JSON.stringify(a.shape);
         area.position = {x : a.position.x, y: a.position.y};
@@ -172,7 +169,7 @@ function saveEncounter(json)
     {
         grps[group] = {};
         grps[group].name = document.querySelector(`#name${group}`).value;
-        grps[group].color = {levels : color(document.querySelector(`#color${group}`).value).levels};
+        grps[group].color = document.querySelector(`#color${group}`).value;
         grps[group].troops = [];
         if(groups[group].troops.length == 0)
         {
@@ -182,18 +179,11 @@ function saveEncounter(json)
             let t = {}
             for(let key in troop)
             {
-                if(key !== "coloration" && key!=="stk" && key!=="position")
-                {
-                    t[key] = troop[key];
-                }
-                if(troop["coloration"])
-                    t.coloration = {r: troop.coloration.levels[0], g: troop.coloration.levels[1], b: troop.coloration.levels[2], a: troop.coloration.levels[3] };
-                if(troop["stk"])
-                    t.stk = {r: troop.stk.levels[0], g: troop.stk.levels[1], b: troop.stk.levels[2], a: troop.stk.levels[3] };
-
-                t.position = {x : troop.position.x, y: troop.position.y};
-                t.dimension = {x:troop.dimension.x, y:troop.dimension.y};
+                t[key] = troop[key];
             }
+            
+            t.position = {x : troop.position.x, y: troop.position.y};
+            t.dimension = {x:troop.dimension.x, y:troop.dimension.y};
             grps[group].troops.push(t);
         })
     }
@@ -227,9 +217,7 @@ function addTroop(group)
 
     let t = LocalData.get("troops", "All")[0];
     t.position = {x : round(camera.mapPosition.x), y : round(camera.mapPosition.y) };
-    let c = color(document.querySelector(`#description`).value);
-    t.stk = {levels : c.levels};
-
+    t.stk = document.querySelector(`#color${group}`).value;
     t = new Troop(t);
     groups[group].troops.push(t); 
     writeTroops(group)
@@ -248,15 +236,13 @@ function editTroop(group, id)
     let posX = document.querySelector(`#posX${group}_${id}` );
     let posY = document.querySelector(`#posY${group}_${id}` );
     let pos = createVector(Number.parseFloat(posX.value * 100), Number.parseFloat(posY.value *100) );
-    let col = color(document.querySelector(`#color${group}`).value);
-    col = {levels : col.levels };
     LocalData.get("troops","All").forEach( troop => 
     {
         if(troop.name == n)
         {
             let t = troop;
             t.position = pos;
-            t.stk = col;
+            t.stk = document.querySelector(`#color${group}`).value;
             t = new Troop(t);
             groups[group].troops[id] = t;
         }
@@ -276,7 +262,7 @@ function addArea(id, shapeI, args)
         pos = createVector(camera.mapPosition.x, camera.mapPosition.y);
         radius = gridSnap * 5;
         pointsAmount = 4;
-        col = color(0,0,0);
+        col = "#000000";
         randomize = 0;
         isObstacle = false;
         animated = false;
@@ -290,9 +276,8 @@ function addArea(id, shapeI, args)
         pos = createVector(Number.parseFloat(document.querySelector(`#areaPosX${id}`).value * 100), Number.parseFloat(document.querySelector(`#areaPosY${id}`).value * 100) );
         radius = Number.parseInt(document.querySelector(`#areaSize${id}`).value * 100);
         pointsAmount = Number.parseInt(document.querySelector(`#areaPointsAmount${id}`).value);
-        col = color(document.querySelector(`#areaCol${id}`).value);
-        col = {levels : col.levels};
-        col.levels[3] = 255 - Number.parseInt(document.querySelector(`#areaAlpha${id}`).value);
+        col = document.querySelector(`#areaCol${id}`).value;
+        col += componentToHex(255 - Number.parseInt(document.querySelector(`#areaAlpha${id}`).value));
         randomize = Number.parseFloat(document.querySelector(`#areaRandom${id}`).value);
         isObstacle = document.querySelector(`#areaObstacle${id}`).checked;
         animated = document.querySelector(`#areaAnimate${id}`).checked;
@@ -454,8 +439,8 @@ function subdivide(id, passes, args)
         a.centro = true;
         if(args.lerpColoration)
         {
-            let c= color(areas[id].coloration.levels[0], areas[id].coloration.levels[1], areas[id].coloration.levels[2], areas[id].coloration.levels[3])
-            let col = lerpColor(c, args.lerpColoration, 0.5);
+            let c= color(areas[id].coloration)
+            let col = lerpColor(c, color(args.lerpColoration), 0.5);
             a.coloration = col;
         }
         if(args.identifySub)

@@ -40,8 +40,7 @@ function writeGroups(holderID, groupNames)
 }
 function changeGroupColor(index, value)
 {
-    let col = color(value);
-    groups[id].color = {levels : col.levels};
+    groups[index].color = value;
 }
 /**writeSavedMapsOption displays all the possible Encounters available in localStorage into a HTML element.  */
 function writeSavedMapsOption()
@@ -235,20 +234,20 @@ function writeArea(id, area)
         let elt = document.querySelector("#areaHolder");
         let n = document.createElement("div");
         let name = area.name || ``;
-        let col = rgbToHex(area.coloration.levels[0], area.coloration.levels[1], area.coloration.levels[2]);
+        let col = area.coloration;
         let pos = createVector(area.position.x / 100, area.position.y / 100);
         let radius = area.radius;
         let pointsAmount = area.pointsAmount;
         let randomize = area.randomize;
         let obstacle = (area.isObstacle) ? `checked` : ``;
         let animated = (area.animated) ? `checked` : ``;
-        let alpha = 255-area.coloration.levels[3];
+        let alpha = 0; // ALPHA is actually transparency... The more you have alpha, the more you have transparency. I know, it's dumb.
     
         n.id = id;
         n.innerHTML = `<div id="areaData${n.id}" style="cursor: pointer; border-bottom: 1px solid rgb(250,180,60);" >
                             <input id="areaName${n.id}" onmouseover='writeExplanation("areaName", 2);' type="text" placeholder="Enter Area Name..." value="${name}" style="margin-right:2rem;" onchange="areas[${n.id}].name = this.value;" /> ${id}
-                            <input id="areaCol${n.id}"  onmouseover='writeExplanation("areaColor", 2);' type="color" onchange="changeAreaColor(${n.id}, this.value);" value="${col}" style="margin-right:2rem; width:2rem;" /> 
-                            Transparency : <input id="areaAlpha${n.id}" style="margin-right:2rem;" onmouseover='writeExplanation("areaAlpha", 2);' type="range" step=1 min=0 max=255 value="${alpha}" onchange="areas[${n.id}].coloration.levels[3] = 255 - parseInt(this.value); " />
+                            <input id="areaCol${n.id}"  onmouseover='writeExplanation("areaColor", 2);' type="color" onchange="changeAreaColor(${n.id});" value="${col}" style="margin-right:2rem; width:2rem;" /> 
+                            Transparency : <input id="areaAlpha${n.id}" style="margin-right:2rem;" onmouseover='writeExplanation("areaAlpha", 2);' type="range" step=1 min=0 max=255 value="${alpha}" onchange="changeAreaColor(${n.id});" />
                             Center : ( X =  <input style="width:2rem;" id="areaPosX${n.id}" type="number"  value="${pos.x}"  onchange="areas[${n.id}].position.x = Number.parseFloat(this.value * 100); redrawArea(${n.id});"  onmouseover='writeExplanation("areaPos", 2);' />
                             , Y = <input style="width:2rem;" id="areaPosY${n.id}" type="number" value="${pos.y}" onchange="areas[${n.id}].position.y = Number.parseFloat(this.value * 100); redrawArea(${n.id});"  onmouseover='writeExplanation("areaPos", 2);' /> )
                             <input style="width: 5rem; margin-left: 2rem;" id="${n.id}" type="submit" value="Clone" onclick="addArea(${n.id})"  onmouseover='writeExplanation("areaClone", 2);' />
@@ -271,10 +270,12 @@ function writeArea(id, area)
         elt.append(n);
     }
 }
-function changeAreaColor(index, value)
+function changeAreaColor(index)
 {
-    let col = color(value);
-    areas[index].coloration = {levels : col.levels};
+    let c = document.querySelector(`#areaCol${index}`).value;
+    let alpha = 255 - Number.parseInt(document.querySelector(`#areaAlpha${index}`).value);
+    c += componentToHex(alpha);
+    areas[index].coloration = c;
 }
 /** Writes a row for each of the points in a given shape */
 function writePointsHTML(id, shape)

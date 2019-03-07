@@ -134,10 +134,7 @@
                     character.abilityScores[key].score = abilities[key].score + abilities[key].modifiers;
                     character.abilityScores[key].bonus = floor((character.abilityScores[key].score - 10) /2 )
                 }
-
-                let coloration = color(document.querySelector(`#partyColor`).value)
-                character.stk = {};
-                character.stk.levels = coloration.levels;
+                character.stk = color(document.querySelector(`#partyColor`).value)
                 
                 let c = new Troop(character);
                 c = JSON.parse(c.toJSON());
