@@ -177,7 +177,8 @@ class LocalData
 }
 
 /** LocalData is a set of static functions to manipulate the localStorage.campaign of the user - Manipulate data for the Campaign Save.*/
-class CampaignData {
+class CampaignData 
+{
     static getCampaignData()
     {
         if (localStorage.campaign == "{}" || localStorage.campaign == undefined)
@@ -522,6 +523,7 @@ function intersectsWithTroop(entity, troops)
     }
     return false;
 }
+
 /** Returns whether a Troop (entity on a Map) intersects with an Area that gives the "Difficult Terrain" condition */
 function insersectsWithDifficultTerrain(point) 
 {
@@ -601,23 +603,28 @@ function getTimeSince(timestamp)
 {
     let time = ``;
     time = Date.now() - timestamp;
-    if (time / 60000 < 1) {
+    if (time / 60000 < 1)
+    {
         time = round(time / 1000);
         return { "value": time, "unit": "minutes", "realUnit": "seconds", "unitValue": 0, "uV": 1, "obj": timestamp }
     }
-    else if (time / (60000 * 60) < 1) {
+    else if (time / (60000 * 60) < 1)
+    {
         time = round(time / (1000 * 60));
         return { "value": time, "unit": "hours", "realUnit": "minutes", "unitValue": 0.01, "uV": 60, "obj": timestamp }
     }
-    else if (time / (60000 * 60 * 24) < 1) {
+    else if (time / (60000 * 60 * 24) < 1)
+    {
         time = round(time / (1000 * 60 * 24));
         return { "value": time, "unit": "days", "realUnit": " x 24 minutes", "unitValue": 0.24, "uV": 60 * 60 }
     }
-    else if (time / (60000 * 60 * 30 * 24) < 1) {
+    else if (time / (60000 * 60 * 30 * 24) < 1)
+    {
         time = round(time / (1000 * 60 * 24 * 30));
         return { "value": time, "unit": "months", "realUnit": " x 12 hours", "unitValue": (30 * 0.24), "uV": 24 * 60 * 60 }
     }
-    else {
+    else 
+    {
         time = round(time / (60000 * 60 * 24 * 360));
         return { "value": time, "unit": "years", "realUnit": " x 6 days", "unitValue": (360 * 0.24), "uV": 24 * 60 * 60 }
     }
@@ -1962,7 +1969,7 @@ const WORLD_DATA =
     ],
     "worldMap":
     [
-        { "name": "Stillwater Plains", "isDestination": "true", "quests": [], "radius": 1000000, "coloration": { "levels": [56, 102, 0, 255] }, "shape": [{ "x": 1866025, "y": 500000 }, { "x": 1866025, "y": 1500000 }, { "x": 1000000, "y": 2000000 }, { "x": 133974, "y": 1500000 }, { "x": 133974, "y": 500000 }, { "x": 999999, "y": 0 }] },
+        { "name": "Stillwater Plains", "isDestination": "true", "quests": [], "radius": 1000000, "coloration": "#386600ff", "shape": [{ "x": 1866025, "y": 500000 }, { "x": 1866025, "y": 1500000 }, { "x": 1000000, "y": 2000000 }, { "x": 133974, "y": 1500000 }, { "x": 133974, "y": 500000 }, { "x": 999999, "y": 0 }] },
         { "name": "Gelbala", "isDestination": "true", "quests": [], "vendors": [], "radius": 30000, "shape": [{ "x": 1206636, "y": 1037296 }, { "x": 1206636, "y": 1055917 }, { "x": 1195690, "y": 1070982 }, { "x": 1177981, "y": 1076737 }, { "x": 1160271, "y": 1070982 }, { "x": 1149325, "y": 1055917 }, { "x": 1149325, "y": 1037296 }, { "x": 1160271, "y": 1022231 }, { "x": 1177981, "y": 1016477 }, { "x": 1195690, "y": 1022231 }] },
         { "name": "Vielo Village", "isDestination": "true", "quests": [{ "name": "Visiting Vielo", "identifier": 00001 }], "vendors": [], "radius": 70000, "shape": [{ "x": 959957, "y": 1204649 }, { "x": 959957, "y": 1247304 }, { "x": 934885, "y": 1281812 }, { "x": 894319, "y": 1294993 }, { "x": 853752, "y": 1281812 }, { "x": 828680, "y": 1247304 }, { "x": 828680, "y": 1204649 }, { "x": 853752, "y": 1170141 }, { "x": 894319, "y": 1156961 }, { "x": 934885, "y": 1170141 }] },
         { "name": "Goblin's Camp", "isHidden": "true", "quests": [], "radius": 20000, "shape": [{ "x": 1518019, "y": 1191322 }, { "x": 1518019, "y": 1208677 }, { "x": 1504450, "y": 1219498 }, { "x": 1487530, "y": 1215636 }, { "x": 1480000, "y": 1200000 }, { "x": 1487530, "y": 1184363 }, { "x": 1504450, "y": 1180501 }] },

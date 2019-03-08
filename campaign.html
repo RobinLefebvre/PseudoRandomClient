@@ -121,7 +121,7 @@
         function setup()
         {
             canvas = createCanvas(windowWidth, windowHeight);
-            windowResized = () => {resizeCanvas(windowWidth, windowHeight); camera.setScreenSize(); camera.setScreenCenterPoint();}
+            windowResized = () => {console.log("resizing"); resizeCanvas(windowWidth, windowHeight); camera.setScreenSize(); camera.setScreenCenterPoint();}
             mouseWheel = (event) => {if(eventManagement.restrictToCanvas(event)){event.preventDefault(); camera.zoom(event);}}
             
             camera = new Camera();
