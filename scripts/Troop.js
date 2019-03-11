@@ -1,28 +1,31 @@
 class Troop
 {
     /** Constructor for a Troop
-     * @param {TroopData} args : JSON data of a Troop / HTML Form data of a Troop.  */
+     * @param {TroopData} args : data of a Troop (JSON/ JS object)  */
     constructor(args)
     {
         this.name = args.name || "Default Troop";
-        // Keep track of the various values that will need resetting.
-        this.originalData = {};
+        this.originalData = {}; // We use Troop.originalData to keep track of the values that might be affected during play
 
+        // Fluff data is filleable with so much random BS that the possibilities are frightening, but we'll get to that later.
+        this.fluffData = { size : args.size || "Medium", type : args.type || "Creature" }
+
+        // isAI tells the game whether or not this Troop is controlled by the AI
         this.isAI = args.isAI || false;
-        this.originalData["isAI"] = this.isAI;
+        this.originalData["isAI"] = clone(this.isAI);
 
-        //Is Player tells which Party the troop belongs to. Needs to be stored because of Charm spells
+        // isPlayer tells which Party the troop belongs to.
         this.isPlayer = args.isPlayer || false;
-        this.originalData["isPlayer"] = args.isPlayer;
+        this.originalData["isPlayer"] = clone(args.isPlayer);
 
-        // Stroke value for the Troop being drawn on the map / shown in Menu. Being Charmed during play should change this, so we add it to originalData.
+        // Stroke value for the Troop being drawn on the map / shown in Menu.
         if(args.stk)
         {
             this.stk = {};
             if(args.stk)
             {
                 this.stk = args.stk;
-                this.originalData["stk"] = args.stk;
+                this.originalData["stk"] = clone(args.stk);
             }
         }
         
@@ -30,17 +33,12 @@ class Troop
         this.position = args.position || {x : 0, y : 0};
 
         // Dimension for the Troop being drawn on the map.
-        if(args.radius) // Radius is remnant of Older version, relying on the Troop Editor... Will eventually dissapear
-            this.dimension = {x :  Number.parseInt(args.radius),  y : Number.parseInt(args.radius) };
         if(args.dimension)
             this.dimension = {x :  Number.parseInt(args.dimension.x),  y : Number.parseInt(args.dimension.y) };
         if(this.dimension === undefined)
-            this.dimension = {x :  75,  y : 75 };
+            this.dimension = getDimensionFromSizeCategory(this.fluffData.size);
 
-        // Fluff data is filleable with so much random BS that the possibilities are frightening, but we'll get to that later.
-        this.fluffData = { size : args.size || "Medium", type : args.type || "Creature" }
-
-        // Some Default ability score (so you can see the content of the map)
+        // Ability scores are presented as { ability : {scoreValue, bonusValue} }
         let stdScore = {"Strength" : {score : 14, bonus : 2}, "Dexterity" : {score : 14, bonus : 2}, "Constitution" : {score : 14, bonus : 2}, "Intelligence" : {score : 10, bonus : 0},  "Wisdom" : {score : 10, bonus : 0}, "Charisma" : {score : 10, bonus : 0}}
         this.abilityScores = args.abilityScores || stdScore;
         this.originalData["abilityScores"] = clone(this.abilityScores);
@@ -50,15 +48,14 @@ class Troop
         this.originalData["hitPoints"] = clone(this.hitPoints);
 
         // Armor Class is subject to change throughout a game, so should be recorded into originalData
-        // TODO : Use object like {"base" : "10", "ability" : "Dexterity"}
         if(!args.armorClass)
             this.armorClass = {"base" : 10, "ability" : "Dexterity"}
-        else if(args.armorClass.base === undefined)
+        else if(args.armorClass.base === undefined) // Troop Creation page sets the AC as an Integer value right now.
             this.armorClass= {"base" : args.armorClass};
         else
             this.armorClass = args.armorClass; 
 
-        // Take initiative bonus from DEX. Can have Conditions which alter it later on.
+        // Take initiative bonus.
         this.initiativeBonus = this.abilityScores["Dexterity"].bonus;
 
         // Speed is the amount of movement you get each turn and it is subject to variations with conditions.
@@ -71,18 +68,12 @@ class Troop
         this.originalData["actionsPerTurn"] = clone(this.actionsPerTurn);
         this.originalData["turnsAmount"] = clone(this.turnsAmount);
 
-        // No Troop has any Damage Modifier on its own. These come from having Conditions.
-        this.resistances = "";
-        this.vulnerabilities = "";
-        this.immunities = "";
-        this.damageBonus = 0;
-        this.toHitBonus = 0;
-
-        // Actions is the Array of action Maps. 
+        // Actions is the array of various actions that the Troop has access to. 
         this.actions = [];
         if(args.actions)
             args.actions.forEach(a => {this.actions.push(a)})
 
+        // We can assign Default actions to all Troops like so, but I'm afraid it ain't pretty.
         if(this.hasAction("name", "Help") === false)
             this.actions.unshift({name:"Help", target:"Ally", reach:150, areaEffect:1, uses : -1, condition : {name:"Helped by " + this.name, duration:1, advantageHit : true}});
         
@@ -92,16 +83,22 @@ class Troop
         if(this.hasAction("name", "Dash") === false && this.speed > 0)
             this.actions.unshift( {name:"Dash", target:"Self", reach:10, areaEffect:1, uses : -1, condition : {name:"Dashing", duration:0, moveMod:1, damage:0}} );
 
-        // A Troop can start the game with some Conditions / Traits
+        // Conditions affect a Troop at the start of each game turn, as well as upon being applied. See "class Condition" below.
         this.conditions = args.conditions || [];
 
-        // Pools of actions are String-Integer pairs limiting uses for Actions
+        // Pools define limitations for certain actions. I.E. a pool {"Spell Slots" : 3} can limit a number of spells to be used 3 times per encounter.
         this.pools = args.pools || {};
         
         // A Troop can receive an equipment which is a map of modifier lists.
         this.equipment = args.equipment || {};
+        // A Troop can receive modifiers from various sources outside of ()
         this.modifiers = args.modifiers || [];
 
+
+        // No Troop has any of these on their own. These come from having Conditions.
+        this.resistances = ""; this.vulnerabilities = ""; this.immunities = "";
+        this.damageBonus = 0; this.toHitBonus = 0;
+ 
         // Since we receive JSON, we double check the parsing of everything for DataTypes. Me no want no NaN.
         this.parse();
     }
@@ -156,10 +153,10 @@ class Troop
         this.applyEquipment();
     }
 
-    /** Looks at the Troop's data and generates the things we need to store locally. */
+    /** Brings the Troop's state to the original data, then stringifies it as JSON */
     toJSON()
     {
-        this.removeEquipment();
+        this.removeEquipment(); // Remove the modifiers that are coming from equipment before saving.
 
         let ret = {};
         ret.name = this.name;
@@ -189,20 +186,16 @@ class Troop
      * {base : Integer, ability : AbilityScore.bonus, maximum : Integer, bonus : Integer } */
     getArmorClass()
     {
-        if(Number.parseInt(this.armorClass) ){
-            return this.armorClass;
-        }
-        if(!this.armorClass.bonus)
-        {
-            this.armorClass.bonus = 0;
-        }
+        if(Number.parseInt(this.armorClass) ){ return this.armorClass; }
+        if(!this.armorClass.bonus){ this.armorClass.bonus = 0; }
+
         let ac = this.armorClass;
         if(ac.base)
         {
             let modifier = 0;
             if(ac.ability)
             {
-                if(ac.ability.includes(", "))
+                if(ac.ability.includes(", ")) // Allow multiple ability scores to be used. "Dexterity, Wisdom" for instance.
                 {
                     let ab = ac.ability.split(", ");
                     for(let i = 0; i < ab.length; i++)
@@ -227,13 +220,15 @@ class Troop
      * @param {String} filter : checks for action[filter]
      * @param {String} value : checks action[filter] == value
      * @param {Boolean} returnIndex : flag to return the Index of the Action instead of the object's pointer.
-     * @returns {Boolean} has the troop got the action ?*/
+     * @returns {Boolean | Object} has the troop got the action ? If so, return it or its index*/
     hasAction(filter, value, returnIndex)
     {
         for(let i = 0; i < this.actions.length; i++)
         {
             if(value === undefined && (filter in this.actions[i]) )
             { 
+                if(returnIndex)
+                    return i;
                 return this.actions[i]
             }
             else if(this.actions[i][filter] == value)
@@ -310,6 +305,7 @@ class Troop
         arr = arr.sort((a, b) => {return a.type.length - b.type.length; } );
         return arr;
     }
+    // WIP
     applyEquipment()
     {
         let mods = this.getModifiersArray();
@@ -319,6 +315,7 @@ class Troop
             this.applyModifier(mod, mod.slot);
         }
     }
+    // WIP
     removeEquipment()
     {
         let mods = this.getModifiersArray();
@@ -328,6 +325,7 @@ class Troop
             this.removeModifier(mod, mod.slot);
         }
     }
+    // WIP
     applyModifier(modifier, slot)
     {
         switch (modifier.type)
@@ -418,6 +416,7 @@ class Troop
                 break;
         }
     }
+    // WIP
     removeModifier(modifier)
     {
         switch (modifier.type)
@@ -490,13 +489,12 @@ class Troop
         }
     }
 
-    /** Sets up the Troop at the start of a Game
-     * Roll dem dices to setup this.initiative and this.hitPoints for a game*/
+    /** Sets up the Troop at the start of a Combat Encounter */
     startGame()
     {
         this.initiative = floor(random() * 20) + 1;
         this.initiative += Number.parseInt(this.initiativeBonus);
-        // Could check for Condition which improves Initiative and apply it.
+        // Should check for Condition which improves Initiative and apply it.
         //logs(`Initiative : 1d20 + ${Number.parseInt(this.initiativeBonus)} = ${this.initiative}`);
 
         // Set the proper Hit Points values from ... the Hit Points values.
@@ -1235,10 +1233,8 @@ class Troop
     }
 }
 
-
 /** Action & Condition helper classes. Used for quick parsing and description of the Action & Condition anonymous objects.
- * In order to be useable objects in the game, we need the ability to Clone and toJSON them. 
- * It *would* really help to do that and refactor the hell out of this file.  */
+ * In order to be useable objects in the game, we need the ability to Clone and toJSON them. */
 class Action
 {
     constructor(args)
@@ -1295,6 +1291,7 @@ class Action
         }
         return a;
     }
+
     describe(ignoreCondition)
     {
         if(ignoreCondition)
@@ -1302,6 +1299,7 @@ class Action
 
         return `${this.describeTarget()}${this.describeSuccess()} ${this.describeDamage()} ${this.describeUses()}${this.describeCondition()}`
     }
+
     describeTarget()
     {
         let ret = ``;
@@ -1327,6 +1325,7 @@ class Action
         }
         return ret;
     }
+
     describeSuccess()
     {
         let ret = ``;
@@ -1363,6 +1362,7 @@ class Action
         }
         return ret;
     }
+
     describeDamage()
     {
         let ret = ``;
@@ -1381,6 +1381,7 @@ class Action
         }
         return ret;
     }
+
     describeUses()
     {
         let ret = ``;
@@ -1405,6 +1406,7 @@ class Action
         }
         return ret;
     }
+
     describeCondition()
     {
         let ret = ``;
@@ -1422,6 +1424,7 @@ class Action
         return ret;
     }
 }
+
 class Condition
 {
     constructor(args)
@@ -1432,6 +1435,7 @@ class Condition
         }
         this.parse();
     }
+
     parse()
     {
         for(let key in this)
@@ -1460,6 +1464,7 @@ class Condition
         }
         return a;
     }
+
     describe()
     {
         let ret = ``;
@@ -1590,4 +1595,5 @@ class Condition
         }
         return ret;
     }
+
 }

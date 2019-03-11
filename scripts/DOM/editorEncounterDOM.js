@@ -198,6 +198,7 @@ function writeTroopActionSelect(group, id)
 
     return elt;
 }
+
 /** AREAS START */
 /** Toggler for the Polygon holder for an Area */
  function toggleAreaHolder(id)
@@ -230,11 +231,10 @@ function writeArea(id, area)
 {
     if(! area.noWrite)
     {
-
         let elt = document.querySelector("#areaHolder");
         let n = document.createElement("div");
         let name = area.name || ``;
-        let col = area.coloration;
+        let col = area.coloration.slice(0,7);
         let pos = createVector(area.position.x / 100, area.position.y / 100);
         let radius = area.radius;
         let pointsAmount = area.pointsAmount;

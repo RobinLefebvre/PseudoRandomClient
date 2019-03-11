@@ -293,11 +293,11 @@ function selectRandom(amount, list)
     }
     return ret;
 }
+let componentToHex = (c) => { var hex = c.toString(16); return hex.length == 1 ? "0" + hex : hex; }
 
 /** Turn the rgb value into a Hex value understood by <input type="color" /> */
 function rgbToHex(r, g, b, a)
 {
-    let componentToHex = (c) => { var hex = c.toString(16); return hex.length == 1 ? "0" + hex : hex; }
 
     if (!a)
         return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
@@ -1971,7 +1971,7 @@ const WORLD_DATA =
     [
         { "name": "Stillwater Plains", "isDestination": "true", "quests": [], "radius": 1000000, "coloration": "#386600ff", "shape": [{ "x": 1866025, "y": 500000 }, { "x": 1866025, "y": 1500000 }, { "x": 1000000, "y": 2000000 }, { "x": 133974, "y": 1500000 }, { "x": 133974, "y": 500000 }, { "x": 999999, "y": 0 }] },
         { "name": "Gelbala", "isDestination": "true", "quests": [], "vendors": [], "radius": 30000, "shape": [{ "x": 1206636, "y": 1037296 }, { "x": 1206636, "y": 1055917 }, { "x": 1195690, "y": 1070982 }, { "x": 1177981, "y": 1076737 }, { "x": 1160271, "y": 1070982 }, { "x": 1149325, "y": 1055917 }, { "x": 1149325, "y": 1037296 }, { "x": 1160271, "y": 1022231 }, { "x": 1177981, "y": 1016477 }, { "x": 1195690, "y": 1022231 }] },
-        { "name": "Vielo Village", "isDestination": "true", "quests": [{ "name": "Visiting Vielo", "identifier": 00001 }], "vendors": [], "radius": 70000, "shape": [{ "x": 959957, "y": 1204649 }, { "x": 959957, "y": 1247304 }, { "x": 934885, "y": 1281812 }, { "x": 894319, "y": 1294993 }, { "x": 853752, "y": 1281812 }, { "x": 828680, "y": 1247304 }, { "x": 828680, "y": 1204649 }, { "x": 853752, "y": 1170141 }, { "x": 894319, "y": 1156961 }, { "x": 934885, "y": 1170141 }] },
+        { "name": "Vielo", "isDestination": "true", "quests": [{ "name": "Visiting Vielo", "identifier": 00001 }], "vendors": [], "radius": 70000, "shape": [{ "x": 959957, "y": 1204649 }, { "x": 959957, "y": 1247304 }, { "x": 934885, "y": 1281812 }, { "x": 894319, "y": 1294993 }, { "x": 853752, "y": 1281812 }, { "x": 828680, "y": 1247304 }, { "x": 828680, "y": 1204649 }, { "x": 853752, "y": 1170141 }, { "x": 894319, "y": 1156961 }, { "x": 934885, "y": 1170141 }] },
         { "name": "Goblin's Camp", "isHidden": "true", "quests": [], "radius": 20000, "shape": [{ "x": 1518019, "y": 1191322 }, { "x": 1518019, "y": 1208677 }, { "x": 1504450, "y": 1219498 }, { "x": 1487530, "y": 1215636 }, { "x": 1480000, "y": 1200000 }, { "x": 1487530, "y": 1184363 }, { "x": 1504450, "y": 1180501 }] },
         { "name": "End Of The World", "radius": 1000000, "shape": [{ "x": 2732050, "y": 2000000 }, { "x": 2732050, "y": 3000000 }, { "x": 1866025, "y": 3500000 }, { "x": 1000000, "y": 3000000 }, { "x": 999999, "y": 2000000 }, { "x": 1866025, "y": 1500000 }], "quests": [{ "name": "Congrats." }] },
         { "name": "End Of The World", "radius": 1000000, "shape": [{ "x": 1000000, "y": 2000000 }, { "x": 1000000, "y": 3000000 }, { "x": 133974, "y": 3500000 }, { "x": -732051, "y": 3000000 }, { "x": -732051, "y": 2000000 }, { "x": 133974, "y": 1500000 }], "quests": [{ "name": "Congrats." }] },
@@ -2009,7 +2009,8 @@ const DEFAULT_DATA =
                 "uses": "1",
                 "reach": 10,
                 "areaEffect": "1",
-                "condition": {
+                "condition": 
+                {
                     "name": "Bonus action",
                     "duration": "0",
                     "additional": "addAction",
@@ -2027,7 +2028,8 @@ const DEFAULT_DATA =
                 "uses": "-1",
                 "reach": 300,
                 "areaEffect": "1",
-                "condition": {
+                "condition": 
+                {
                     "name": "Great Weapon Master",
                     "duration": "-1",
                     "notDealt": true,
@@ -2082,7 +2084,8 @@ const DEFAULT_DATA =
                 "expandsPool": true,
                 "reach": 10,
                 "areaEffect": "1",
-                "condition": {
+                "condition": 
+                {
                     "name": "Recharge",
                     "duration": "0",
                     "recharge": "Loaded Crossbow Bolts, 1"
@@ -2141,7 +2144,8 @@ const DEFAULT_DATA =
                 "areaEffect": 900,
                 "pool": "Level 1 spell slots",
                 "expandsPool": true,
-                "condition": {
+                "condition": 
+                {
                     "name": "Blessed by Clerga",
                     "duration": "10",
                     "disadvantageTarget": true,
@@ -2158,7 +2162,8 @@ const DEFAULT_DATA =
                 "areaEffect": "1",
                 "pool": "Level 1 spell slots",
                 "expandsPool": true,
-                "condition": {
+                "condition": 
+                {
                     "name": "Commanded by Clerga",
                     "duration": "1",
                     "charm": "true"
@@ -2176,7 +2181,8 @@ const DEFAULT_DATA =
                 "areaEffect": "1",
                 "pool": "Level 1 spell slots",
                 "expandsPool": true,
-                "condition": {
+                "condition": 
+                {
                     "name": "Guided by Clerga",
                     "duration": "1",
                     "advantageTarget": "true"
@@ -2188,7 +2194,8 @@ const DEFAULT_DATA =
                 "reach": 10,
                 "areaEffect": 1,
                 "uses": -1,
-                "condition": {
+                "condition": 
+                {
                     "name": "Dashing",
                     "duration": 0,
                     "moveMod": 1
@@ -2200,7 +2207,8 @@ const DEFAULT_DATA =
                 "reach": 10,
                 "areaEffect": 1,
                 "uses": -1,
-                "condition": {
+                "condition": 
+                {
                     "name": "Dodging",
                     "duration": 0,
                     "disadvantageTarget": true
@@ -2212,8 +2220,9 @@ const DEFAULT_DATA =
                 "reach": 150,
                 "areaEffect": 1,
                 "uses": -1,
-                "condition": {
-                    "name": "Helped by Goblin Boss",
+                "condition": 
+                {
+                    "name": "Helped by Someone",
                     "duration": 1,
                     "advantageHit": true
                 }
@@ -2275,7 +2284,8 @@ const DEFAULT_DATA =
                 "expandsPool": "true",
                 "reach": 900,
                 "areaEffect": 300,
-                "condition": {
+                "condition": 
+                {
                     "name": "Poisoned",
                     "duration": 5,
                     "damage": "1d6",
@@ -2326,7 +2336,8 @@ const DEFAULT_DATA =
                 "areaEffect": 1,
                 "pool": "Level 1 spell slots",
                 "expandsPool": "true",
-                "condition": {
+                "condition": 
+                {
                     "name": "Protected ",
                     "duration": -1,
                     "disadvantageTarget": "true"
@@ -2338,7 +2349,8 @@ const DEFAULT_DATA =
                 "uses": -1,
                 "reach": 900,
                 "areaEffect": 1,
-                "condition": {
+                "condition": 
+                {
                     "name": "Striked by Genji",
                     "duration": 0,
                     "advantageTarget": "true"
@@ -2401,7 +2413,8 @@ const DEFAULT_DATA =
                 "uses": "-1",
                 "reach": 100,
                 "areaEffect": "1",
-                "condition": {
+                "condition": 
+                {
                     "name": "Enraged",
                     "duration": "10",
                     "resistances": "Slashing, Piercing, Bludgeoning, ",
@@ -2428,7 +2441,8 @@ const DEFAULT_DATA =
                 "uses": "-1",
                 "reach": 900,
                 "areaEffect": "1",
-                "condition": {
+                "condition": 
+                {
                     "name": "Asleep",
                     "duration": -1,
                     "save": "Wisdom",
@@ -2471,7 +2485,8 @@ const DEFAULT_DATA =
                 "reach": 900,
                 "areaEffect": "1",
                 "pool": "Spells",
-                "condition": {
+                "condition": 
+                {
                     "name": "Charmed by Lamia",
                     "duration": 5,
                     "save": "Wisdom",
@@ -2491,7 +2506,8 @@ const DEFAULT_DATA =
                 "uses": "-1",
                 "reach": 150,
                 "areaEffect": "1",
-                "condition": {
+                "condition": 
+                {
                     "name": "Intoxicated by Lamia",
                     "duration": 5,
                     "additional": "saveDisadvantage",
@@ -2512,7 +2528,8 @@ const DEFAULT_DATA =
                 "reach": "450",
                 "areaEffect": "1",
                 "timestamp": 1550545867062,
-                "condition": {
+                "condition": 
+                {
                     "name": "Dodging",
                     "duration": 0,
                     "disadvantageTarget": true,
@@ -3667,7 +3684,7 @@ const DEFAULT_DATA =
         [
             {
                 "name": "Goblin Chieftain",
-                "type": "goblinoïd",
+                "type": "humanoïd (Goblinoïd)",
                 "dimension": {
                     "x": "75",
                     "y": "75"
@@ -3781,7 +3798,7 @@ const DEFAULT_DATA =
             },
             {
                 "name": "Goblin Troop",
-                "type": "goblinoïd",
+                "type": "humanoïd (Goblinoïd)",
                 "dimension": {
                     "x": "50",
                     "y": "50"
@@ -3879,7 +3896,7 @@ const DEFAULT_DATA =
             },
             {
                 "name": "Goblin Archer",
-                "type": "goblinoïd",
+                "type": "humanoïd (Goblinoïd)",
                 "dimension": {
                     "x": "50",
                     "y": "50"
@@ -4012,7 +4029,7 @@ const DEFAULT_DATA =
             {
                 "name": "Jackalwere",
                 "source": "Default",
-                "type": "humanoïd",
+                "type": "humanoïd (Lycanthrope)",
                 "dimension": {
                     "x": "75",
                     "y": "75"
@@ -4900,72 +4917,97 @@ const DEFAULT_DATA =
         "conditions": 
         [
             {
-                "name": "Asleep",
+                "name": "Stunned",
+                "duration": 1,
+                "skipTurn": true,
+            },
+            {
+                "name": "Asleep (Wisdom Save)",
                 "duration": -1,
                 "save": "Wisdom",
                 "saveDC": 10,
                 "skipTurn": true,
-                "timestamp": 1550522150660
             },
             {
-                "name": "Charmed by Lamia",
-                "duration": 5,
-                "save": "Wisdom",
-                "saveDC": 13,
-                "charm": true,
-                "timestamp": 1550522353647
+                "name": "Rage",
+                "duration": -1,
+                "resistances" : "Bludgeoning, Piercing, Slashing, ",
+                "damageBonus" : 2
             },
             {
-                "name": "Intoxicated by Lamia",
+                "name" : "Regenerating",
+                "duration" : -1,
+                "damage" : "-10"
+            },
+            {
+                "name" : "1d6 Damage (5 turns)",
+                "duration" : 5,
+                "damage" : "1d6"
+            },
+            {
+                "name" : "1d6 Damage (Con save DC 10)",
+                "duration" : -1,
+                "save": "Constitution",
+                "saveDC": 10,
+                "damage" : "1d6"
+            },
+            {
+                "name": "Wisdom Save Advantage",
                 "duration": 5,
-                "additional": "saveDisadvantage",
+                "saveAdvantage": "Wisdom",
+            },
+            {
+                "name": "Wisdom Save Disadvantage",
+                "duration": 5,
                 "saveDisadvantage": "Wisdom",
-                "timestamp": 1550522353654
             },
             {
                 "name": "Dodging",
                 "duration": 0,
                 "disadvantageTarget": true,
-                "timestamp": 1550545867028
+            },
+            {
+                "name": "Hit by Guiding Bolt",
+                "duration" : 1,
+                "advantageTarget" : true,
+            },
+            {
+                "name": "Helped by Someone",
+                "duration": 1,
+                "advantageHit": true,
+            },
+            {
+                "name": "Hit by Vicious Mockery",
+                "duration": 1,
+                "disadvantageHit": true,
+            },
+            {
+                "name": "Reckless",
+                "duration": 0,
+                "advantageTarget": true,
+                "advantageHit": true,
             },
             {
                 "name": "Bonus action",
+                "notDealt": true,
                 "duration": 0,
-                "additional": "addAction",
                 "addAction": 1,
-                "timestamp": 1550546154919
             },
             {
                 "name": "Great Weapon Master",
                 "duration": -1,
                 "notDealt": true,
                 "rerollDamage": 1,
-                "timestamp": 1550546154965
             },
             {
-                "name": "Recharge",
+                "name": "Recharging Slot",
                 "duration": 0,
-                "recharge": "Loaded Crossbow Bolts, 1",
-                "timestamp": 1550546173283
+                "recharge": "Loaded Bolts, 1",
             },
             {
-                "name": "Blessed by Clerga",
-                "duration": 10,
-                "disadvantageTarget": true,
-                "saveAdvantage": "Wisdom",
-                "timestamp": 1550546173359
-            },
-            {
-                "name": "Commanded by Clerga",
+                "name": "Charmed by Someone",
                 "duration": 1,
                 "charm": true,
-                "timestamp": 1550546173390
-            },
-            {
-                "name": "Guided by Clerga",
-                "duration": 1,
-                "advantageTarget": true,
-                "timestamp": 1550546173421
             }
         ]
     }

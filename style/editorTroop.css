@@ -3,7 +3,7 @@
 #troopCreation, #actionEdit
 {
     overflow: auto;
-    grid-column:3/22;
+    grid-column:3/23;
     grid-row: 2/-1;
     grid-column-gap: 1%;
     padding : 0.5rem;
@@ -65,7 +65,7 @@
     padding-top:0.5rem; 
     background-color:rgba(0,0,0,0.75); 
     color : rgb(200,200,200);
-    grid-column: 22/23; 
+    grid-column: 23/24; 
     grid-row:3/6; 
     border-radius: 1rem; 
     border-top-left-radius:0rem; 

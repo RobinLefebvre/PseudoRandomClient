@@ -79,8 +79,6 @@
         <!-- Util is basically all the shared code, so yeah, it's always gun'be messy there. -->
         <script src="scripts/util.js"> </script>
 
-        <script src="local dependencies/campaignItems.js"> </script>
-
         <script>
         let canvas,camera;
         let activeTab = "Navigation";
@@ -121,7 +119,7 @@
         function setup()
         {
             canvas = createCanvas(windowWidth, windowHeight);
-            windowResized = () => {console.log("resizing"); resizeCanvas(windowWidth, windowHeight); camera.setScreenSize(); camera.setScreenCenterPoint();}
+            windowResized = () => {resizeCanvas(windowWidth, windowHeight); camera.setScreenSize(); camera.setScreenCenterPoint();}
             mouseWheel = (event) => {if(eventManagement.restrictToCanvas(event)){event.preventDefault(); camera.zoom(event);}}
             
             camera = new Camera();
@@ -226,7 +224,9 @@
                 toggleTab("vendors", "none");
             }
         }
+
         function simpleToggle(id){ let elt = document.querySelector(`#${id}`); if(elt !== null){ if(elt.style.display == "grid"){elt.style.display="none"} else{elt.style.display = "grid"} }}
+        
         function gainIdleGold(campaign, elapsedTime)
         {
             let gainedGold = elapsedTime.value * elapsedTime.unitValue * 100;
@@ -421,30 +421,30 @@
             if(activeTab == "Navigation")
             {
                 return `<button class="activeMenuButton" > Navigation </button>
-                        <button onclick="switchTab('Equipment')"> Equipment </button>
-                        <button onclick="switchTab('Inventory')"> Inventory </button>
-                        <button onclick="saveCampaign()" > Save </button>`
+                        <button class="inactiveButton" onclick="switchTab('Equipment')"> Equipment </button>
+                        <button class="inactiveButton" onclick="switchTab('Inventory')"> Inventory </button>
+                        <button class="inactiveButton" onclick="saveCampaign()" > Save </button>`
             }
             else if(activeTab == "Equipment")
             {
-                return `<button onclick="switchTab('Navigation')"> Navigation </button>
+                return `<button class="inactiveButton" onclick="switchTab('Navigation')"> Navigation </button>
                         <button class="activeMenuButton" > Equipment </button> 
-                        <button onclick="switchTab('Inventory')"> Inventory </button>
-                        <button onclick="saveCampaign()" > Save </button>`
+                        <button class="inactiveButton" onclick="switchTab('Inventory')"> Inventory </button>
+                        <button class="inactiveButton" onclick="saveCampaign()" > Save </button>`
             }
             else if(activeTab == "Inventory")
             {
-                return `<button onclick="switchTab('Navigation')"> Navigation </button>
-                        <button onclick="switchTab('Equipment')" > Equipment </button> 
+                return `<button class="inactiveButton" onclick="switchTab('Navigation')"> Navigation </button>
+                        <button class="inactiveButton" onclick="switchTab('Equipment')" > Equipment </button> 
                         <button class="activeMenuButton" > Inventory </button>
-                        <button onclick="saveCampaign()" > Save </button>`
+                        <button class="inactiveButton" onclick="saveCampaign()" > Save </button>`
             }
             else
             {
-                return `<button onclick="switchTab('Navigation')"> Navigation </button>
-                        <button onclick="switchTab('Equipment')" > Equipment </button> 
-                        <button onclick="switchTab('Inventory')" > Inventory </button>
-                        <button onclick="saveCampaign()" > Save </button>`
+                return `<button class="inactiveButton" onclick="switchTab('Navigation')"> Navigation </button>
+                        <button class="inactiveButton" onclick="switchTab('Equipment')" > Equipment </button> 
+                        <button class="inactiveButton" onclick="switchTab('Inventory')" > Inventory </button>
+                        <button class="inactiveButton" onclick="saveCampaign()" > Save </button>`
             }
         }
         
@@ -469,6 +469,8 @@
                 }
             }
             character = new Troop(c);
+            party[characterIndex] = JSON.parse(character);
+            campaign.party = party;
         }
         
         function writeChar()
@@ -717,7 +719,7 @@
                     {
                         if(vends[i].items[it].name == item.name)
                         {
-                            if(!item.quantity || item.quantity == 1)
+                            if(item.quantity === undefined || item.quantity == 1)
                             {
                                 vends[i].items.splice(it,1);
                             }
@@ -740,6 +742,7 @@
 
             // REWRITE DOM
             writeInventory();
+            writeChar();
             startVendor(vendorID);
         }
         

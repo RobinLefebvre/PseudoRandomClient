@@ -215,7 +215,7 @@ function addTroop(group)
         groups[group].troops = [];
     }
 
-    let t = LocalData.get("troops", "All")[0];
+    let t = {};
     t.position = {x : round(camera.mapPosition.x), y : round(camera.mapPosition.y) };
     t.stk = document.querySelector(`#color${group}`).value;
     t = new Troop(t);

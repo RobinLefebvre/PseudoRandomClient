@@ -42,52 +42,44 @@
             <input value="Save Troop" type="submit" onclick="sendData();" style="background-color: rgb(250,180,60); margin-top:2rem; color:rgb(50,50,50)"  />
         </div>
         <div id="troopCreation">
-            <!-- ROW 1 -->
             <p id="explanations" style="grid-column: 1/-1; padding-left:2rem;"><b style="font-size:1.3rem; text-decoration: underline;">Troop Creation</b></p> 
 
-                <!-- ROW 2 -->
             <p> Clone existing Troop </p><select id="edit" onchange="writeTroop(this.value)"> <option value="none">None</option></select>
-            <p style="grid-column: 3/-1;"> <br/> </p>
+            <p style="grid-column: 3/-1;"> <br/> </p><!-- Empty -->
 
-            <!-- ROW 3 -->
             <p> Name : </p> <input type="text" id="name" placeHolder="Troop Name..." />
             <p> Source : </p> <input type="text" id="source" value="Default" /> 
 
-            <!-- ROW 4 -->
             <p style="grid-row : 4/5; grid-column:1/-1; padding-left:3rem;">  <br/> <b style="font-size:1.2rem;;"> Fluff Data : </b></p>
 
-            <!-- ROW 5 -->
             <p> Map Size (centimeter radius)  : </p> <input type="number" id="radius" value="50"/> 
             <p> Fluff Size : </p> <select id="size"><option value="Tiny">Tiny </option><option value="Small">Small </option><option value="Medium">Medium </option><option value="Large">Large </option><option value="Huge">Huge </option><option value="Gargantuan">Gargantuan </option></select> 
             
-            <!-- ROW 6 -->
             <p> Troop Type : </p> <input type="text" id="type" value="humanoïd"/> 
-            <p style="grid-column:3/-1; grid-row:6/8;"> </p>
+            <p style="grid-column:3/-1; grid-row:6/8;"> </p><!-- Empty -->
 
-            <!-- ROW 7 -->
-            <p style="grid-row : 7/8; grid-column:1/-1;"></p>
-            <!-- ROW 8 -->
+            <p style="grid-row : 7/8; grid-column:1/-1;"></p> <!-- Empty -->
             <p style="grid-row : 8/9; grid-column:1/-1; padding-left:3rem;"><b style="font-size:1.2rem;"> Game Data : </b> <br/></p>
 
-            <!-- ROW 9-->
             <p> Hit Points : </p> <p style="margin:0; padding-top:0.5rem; padding-left:0;"> <input type="number" style="width:20%;margin:0;" id="hpamount" value="1"/> d <select id="hptype" style="width:20%;margin:0;"><option value="6"> 6 </option><option value="1"> 1 </option><option value="4"> 4 </option><option value="6"> 6 </option><option value="8"> 8 </option><option value="10"> 10 </option><option value="12"> 12 </option></select> + <input style="width:20%;margin:0;" id="hpBonus" type="number" value="0" /> </p>
-            <p style="grid-row : 9/10; grid-column:3/-1;"></p>
+            <p style="grid-row : 9/10; grid-column:3/-1;"></p><!-- Empty -->
 
-            <!-- ROW 10-->
             <p> Armor Class : </p> <input type="number" id="armorClass" value="10" />  
             <p> Movement Speed (m. / turn): </p> <input type="number" id="speed" value="9" />
             
-            <!-- ROW 11 -->
+            <!-- Empty -->
             <p style="grid-row : 11/12; grid-column:1/-1;"> </p>
 
-            <!-- ROW 12 -->
             <p> Actions Per Turn : </p> <input  id="actionsPerTurn" type="number" value="1"/>
             <p> Turns Per Round : </p> <input  id="turnsAmount" type="number" value="1"/>
 
-            <!-- ROW 13 -->
-            <p style="grid-row : 13/14; grid-column:1/-1;"></p>
+            <!-- Empty -->
+            <p style="grid-column:1/-1;"></p>
+            <p style="grid-column:1/-1;"></p>
+            <p style="grid-column:1/-1;"></p>
+            <p style="grid-column:1/-1;"></p>
+            <p style="grid-column:1/-1;"></p>
 
-            <!-- ROW 14 -->
             <table style=" border-bottom : 1px solid rgb(250,180,60); margin-bottom : 2rem;">
                 <tr style="height: 4rem; border-top:1px solid rgb(250,180,60);">
                     <th><b>Ability</b></th>
