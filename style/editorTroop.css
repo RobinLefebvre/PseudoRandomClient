@@ -1,0 +1,116 @@
+/* Troop Editor page**/
+/* Tabs containing the form */
+#troopCreation, #actionEdit
+{
+    overflow: auto;
+    grid-column:3/23;
+    grid-row: 2/-1;
+    grid-column-gap: 1%;
+    padding : 0.5rem;
+    
+    background-color: rgba(0,0,0,0.5);
+    color:rgb(200,200,200);
+
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(20, 1fr);
+
+    border-top-left-radius: 2rem;
+    border-top-right-radius: 2rem;
+
+    border: 2px solid black;
+}
+#actionsHolder
+{
+    grid-column : 1/-1;
+    grid-row : 6/-1;
+    width:90%;
+    margin-left : 5%;
+    display: grid;
+    grid-template-columns: 5fr 5fr 1fr;
+    grid-template-rows: repeat(24,1fr);
+    color:rgb(200,200,200);
+}
+
+#actionsList
+{
+    grid-column : 1/-1;
+    display:grid;
+}
+
+.holder
+{
+    grid-column : 1/-1;
+    display:grid;
+    background-color: rgba(0,0,0,0.5);
+    grid-template-columns: 5fr 5fr 1fr;
+    grid-column-gap : 1rem;
+    padding-top: 0.5rem;
+    padding-left : 0.5rem;
+    border-bottom : 1px solid rgb(250,180,60);
+}
+.attributesHolder
+{
+    grid-column : 1/-1;
+    display:grid;
+    grid-template-columns: 5fr 5fr 1fr;
+}
+.explanation 
+{
+    grid-column: 1/-1;
+}
+/* Menu to switch between tabs */
+#troopCreationMenu
+{
+    padding-top:0.5rem; 
+    background-color:rgba(0,0,0,0.75); 
+    color : rgb(200,200,200);
+    grid-column: 23/24; 
+    grid-row:3/6; 
+    border-radius: 1rem; 
+    border-top-left-radius:0rem; 
+    border-bottom-left-radius:0rem;
+    padding-top:1rem;
+    border-left:4px double rgb(240,180,60);
+}
+#troopCreationMenu input
+{
+   width:100%;border:none; outline:none; font-size : 1.3rem;
+}
+/* TABLES */
+#troopCreation table, #actionEdit table
+{
+    table-layout: fixed;
+    grid-column : 1/-1;
+    width:90%;
+    margin-left : 5%;
+    border : 1px solid rgba(250, 180, 60,0.85);
+    text-align : center;
+}
+/* Inputs within tables */
+#troopCreation table input, #troopCreation table select, #actionEdit table input, #actionEdit table select, #troopCreation table p
+{
+    margin-right:0;
+    width: 90%;
+    padding:0;
+    border:none;
+    text-align : center;
+}
+/* Ability Score Inputs */
+#troopCreation table input.asinput
+{ 
+    width:2rem;
+    text-align : right;
+    background-color:rgba(0,0,0,0.5);
+    padding:0.5rem;
+    border : none; 
+}
+
+.tableButton
+{
+    font-size:1.2rem; 
+    margin-bottom : 0;
+    width:100%; 
+    border:none; 
+    background-color:rgba(0,0,0,0.5);
+}

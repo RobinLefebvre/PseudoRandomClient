@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-{scpre : 8}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PseudoRandom - Dev Sandbox</title>
+
+    <!-- p5 
+    <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/addons/p5.dom.min.js"></script>-->
+    <!-- local p5-->
+    <script language="javascript" type="text/javascript" src="local dependencies/p5.min.js"></script>
+    <script language="javascript" type="text/javascript" src="local dependencies/p5.dom.min.js"></script>
+
+    <!-- FONTS -- IRRELEVANT IN LOCAL-->
+    <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"rel="stylesheet">
+
+    <!-- Pure CSS 
+    <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous"> -->
+    <!-- Local Pure CSS -->
+    <link rel="stylesheet" href="local dependencies/purecss.css"> 
+
+    <link href="./style/main.css" rel="stylesheet" />
+    <link href="./style/campaign.css" rel="stylesheet" />
+
+</head>
+<body>
+    <div id="page_content">
+        <div id="pointsTab"> 
+            <p>Currency </p> <p id="goldPoints" class="gold border-right fullSize tCenter"> </p>
+            <p>Renown </p> <p id="renownPoints" class="border-right fullSize tCenter"> </p> 
+            <p>Experience </p> <p id="experiencePoints" class="white border-right fullSize tCenter"> </p>
+            <p>Activity</p> <p id="activityDisplay" class="white border-right fullSize tRight" style="padding-right:1rem;"></p>
+            <p style="padding-left:1.5rem;">Date</p> <p id="timeDisplay" class="white tCenter"> </p>
+        </div>
+        <div id="temporary"></div>
+
+        <!-- Default Tab : Navigation-->
+        <div id="navigationTab">
+            <div id="quests"></div>
+    
+            <div id="destinations"></div>
+        </div>
+        <!-- Menu is used to switch between TABS -->
+        <div id="menuTab">
+            
+        </div>
+    
+        <!-- Interaction Tab is populated by <scipts> with a Scripted Interaction event. -->
+        <div id="interactionTab">
+            <div id="interactionText">
+            </div>
+            <div id="interactionImage">
+            </div>
+            <div id="interactionOptions">
+            </div>
+        </div>
+    
+        <div id="equipmentTab">
+            <div id="characterInfo"></div>
+            <div id="equipmentSelector"></div>
+        </div>
+    
+        <div id="vendorsTab">
+        </div>
+    
+        <div id="inventoryTab">
+        </div>
+    </div>
+    
+
+    <div id="scripts">
+        <!-- Camera is the class responsible for drawing most things on the canvas. -->
+        <script src="scripts/Camera.js"> </script>
+        <!-- Troop is the class allowing to roll dices and basically play the game. -->
+        <script src="scripts/Troop.js"> </script>
+        <!-- Util is basically all the shared code, so yeah, it's always gun'be messy there. -->
+        <script src="scripts/util.js"> </script>
+
+        <script>
+        let canvas,camera;
+        let activeTab = "Navigation";
+        let campaign = CampaignData.getCampaignData();
+        if(campaign === undefined)
+        {
+            window.location.href = SERVER + "campaignStart.html";
+        }
+        campaign.position.x = Number.parseInt(campaign.position.x)
+        campaign.position.y = Number.parseInt(campaign.position.y)
+        campaign.timestamp = Number.parseInt(campaign.timestamp);
+        campaign.points.renown = Number.parseInt(campaign.points.renown);
+        campaign.points.experience = Number.parseInt(campaign.points.experience);
+        campaign.points.gold = Number.parseFloat(Number.parseFloat(campaign.points.gold).toFixed(2));
+        campaign.inventory = campaign.inventory;
+
+        let partySize = 0; 
+        let partySpeed = 0;
+
+        let visibleQuests = [];
+        let visibleDestinations = [];
+
+        let selectedQuest = {};
+        let selectedDestination = {};
+
+        let party = CampaignData.get("party");
+        let characterIndex = 0;
+        let c = party[characterIndex];
+        let character = new Troop(c);
+        let equipmentSlots = ["Forehead", "Ears", "Neck", "Shoulders", "Left Hand", "Right Hand", "Both Hands", "Fingers", "Body", "Belt","Feet"];
+        let inventory = CampaignData.get("inventory");
+        
+        let worldMap = WorldData.get("worldMap");
+        let worldMapSize = 10000 * 100;
+
+
+        /** setup() is called on load of the page, once. **/
+        function setup()
+        {
+            canvas = createCanvas(windowWidth, windowHeight);
+            windowResized = () => {resizeCanvas(windowWidth, windowHeight); camera.setScreenSize(); camera.setScreenCenterPoint();}
+            mouseWheel = (event) => {if(eventManagement.restrictToCanvas(event)){event.preventDefault(); camera.zoom(event);}}
+            
+            camera = new Camera();
+            camera.setMap(worldMapSize);
+            campaign.party.forEach(t => 
+            {
+                partySpeed += Number.parseInt(t.speed); 
+                partySize += Number.parseInt(t.dimension.x)
+            });
+
+            camera.setZoom(partySpeed * 50);
+            camera.zoomBoundaries.min = partySize * 50;
+            camera.zoomBoundaries.max = worldMapSize;
+
+            partySize = createVector(partySize, partySize);
+
+            // Set DOM up with the data grom the campaign.
+            updateNavigarionPanel();
+            updatePointsPanel();
+            writeInventory();
+
+            document.querySelector(`#menuTab`).innerHTML = getMenuHTML();
+
+            // Compute the idle time since last refresh of the page.
+            let timeSincePlayed = getTimeSince(campaign.timestamp);
+            if(timeSincePlayed.unit != "minutes")
+            {
+                campaign.timestamp = Date.now();
+                if(campaign.destination)
+                    moveIdleDistance(campaign, timeSincePlayed);
+
+                gainIdleGold(campaign, timeSincePlayed);
+            }
+        }
+
+        function switchTab(name)
+        {
+            activeTab = name;
+            if(name == "Navigation")
+            {
+                toggleTab("points", "grid");
+                toggleTab("menu", "grid");
+                document.querySelector(`#menuTab`).innerHTML = getMenuHTML();
+
+                toggleTab("navigation", "grid");
+                toggleTab("equipment", "none");
+                toggleTab("inventory", "none");
+
+                toggleTab("interaction", "none");
+                toggleTab("vendors", "none");
+            }
+            else if(name == "Interaction")
+            {
+                toggleTab("points", "none");
+                toggleTab("menu", "none");
+
+                toggleTab("navigation", "none");
+                toggleTab("equipment", "none");
+                toggleTab("inventory", "none");
+
+                toggleTab("interaction", "grid");
+                toggleTab("vendors", "none");
+            }
+            else if(name == "Inventory")
+            {
+                toggleTab("points", "grid");
+                toggleTab("menu", "grid");
+                document.querySelector(`#menuTab`).innerHTML = getMenuHTML();
+
+                toggleTab("navigation", "none");
+                toggleTab("equipment", "none");
+                toggleTab("inventory", "grid");
+
+                toggleTab("interaction", "none");
+                toggleTab("vendors", "none");
+            }
+            else if(name == "Vendor")
+            {
+                toggleTab("points", "grid");
+                toggleTab("menu", "grid");
+
+                toggleTab("navigation", "none");
+                toggleTab("equipment", "none");
+                toggleTab("inventory", "grid");
+                
+                toggleTab("interaction", "none");
+                toggleTab("vendors", "grid");
+            }
+            else if(name == "Equipment")
+            {
+                writeChar();
+
+                toggleTab("points", "grid");
+                toggleTab("menu", "grid");
+                document.querySelector(`#menuTab`).innerHTML = getMenuHTML();
+
+                toggleTab("navigation", "none");
+                toggleTab("equipment", "grid");
+                toggleTab("inventory", "none");
+
+                toggleTab("interaction", "none");
+                toggleTab("vendors", "none");
+            }
+        }
+
+        function simpleToggle(id){ let elt = document.querySelector(`#${id}`); if(elt !== null){ if(elt.style.display == "grid"){elt.style.display="none"} else{elt.style.display = "grid"} }}
+        
+        function gainIdleGold(campaign, elapsedTime)
+        {
+            let gainedGold = elapsedTime.value * elapsedTime.unitValue * 100;
+            gainedGold = Number.parseFloat( gainedGold.toFixed(2) /100 );
+
+            campaign.points.gold += gainedGold;
+            campaign.points.gold = parseFloat(Math.round(campaign.points.gold * 100) / 100).toFixed(2);
+
+            let textValue = getCurrency(gainedGold);
+            displayTemporary(`You haven't played in ${elapsedTime.value} ${elapsedTime.unit}. You gain <b class="gold"> ${textValue} </b>.`, "h2", "", 2500)
+        }
+
+        function moveIdleDistance(campaign, elapsedTime)
+        {
+            let start = createVector(campaign.position.x, campaign.position.y);
+            let end = createVector(campaign.destination.x, campaign.destination.y);
+            let sub = end.copy().sub(start);
+            let distanceTraveled = partySpeed * (elapsedTime.value * elapsedTime.uV);
+            if(distanceTraveled * distanceTraveled > sub.magSq())
+            {
+                campaign.position.x = end.x;
+                campaign.position.y = end.y;
+                campaign.state = "Idle";
+            }
+            else
+            {
+                let moved = sub.setMag(distanceTraveled);
+                campaign.position.x = start.x + moved.x;
+                campaign.position.y = start.y + moved.y;
+            }
+        }
+
+        /** tick() is called every second from the load of the page */
+        setInterval(tick, 1000);
+        function tick()
+        {
+            updatePointsPanel();
+            updateNavigarionPanel();
+            campaign.timestamp = Date.now();
+            localStorage.campaign = JSON.stringify(campaign);
+        }
+
+        function updatePointsPanel()
+        {
+            document.querySelector(`#goldPoints`).innerHTML = `<b> ${getCurrency(campaign.points.gold) } </b>`;
+            document.querySelector(`#renownPoints`).innerHTML = `<b> ${campaign.points.renown } </b>`;
+            document.querySelector(`#experiencePoints`).innerHTML = `<b> ${campaign.points.experience } </b>` ;
+            document.querySelector(`#activityDisplay`).innerHTML = `<b> ${getActivityHTML()} </b>` ;
+            document.querySelector(`#timeDisplay`).innerHTML = `<b> ${getTime(campaign.timestamp)} </b>` ;
+        }
+
+        function getActivityHTML()
+        {
+            let a = campaign.activity;
+            if(campaign.state == "Idle")
+            {
+                for(let i = worldMap.length -1; i >= 0; i--)
+                {
+                    if(intersects(createVector(campaign.position.x, campaign.position.y), worldMap[i].shape) )
+                    {
+                        return `<b> Idle in ${worldMap[i].name}`;
+                    }
+                }
+                
+            }
+            if(campaign.state == "Moving" && campaign.destination)
+            {
+                for(let i = worldMap.length -1; i >= 0; i--)
+                {
+                    if(intersects(createVector(campaign.destination.x, campaign.destination.y), worldMap[i].shape) )
+                    {
+                        return `<b> Moving towards ${worldMap[i].name}`;
+                    }
+                }
+            }
+        }
+
+        function displayTemporary(message, elt, styleClass, time)
+        {
+            document.querySelector(`#temporary`).innerHTML = `<${elt} class="${styleClass}"> ${message} </${elt}>`;
+            document.querySelector(`#temporary`).style.display = "grid";
+            setTimeout(() => {document.querySelector(`#temporary`).style.display = "none";}, time);
+        }
+
+        function updateNavigarionPanel()
+        {
+            visibleQuests = updateVisibleQuests();
+            document.querySelector(`#quests`).innerHTML = getVisibleQuestsHTML();
+            visibleDestinations = updateDestinations();
+            document.querySelector(`#destinations`).innerHTML = getDestinationsHTML();
+        }
+
+        function updateVisibleQuests()
+        {
+            let ret = [];
+            let currentPosition = campaign.position;
+            for(let index = 0; index < worldMap.length; index++)
+            {
+                let mapArea = worldMap[index];
+                if(mapArea.quests && mapArea.quests.length > 0 &&  intersects(currentPosition, mapArea.shape) )
+                {
+                    ret.push({"name" : mapArea.name, "quests" : mapArea.quests}); 
+                }
+            }
+            return ret;
+        }
+
+        function getVisibleQuestsHTML()
+        {
+            let elt = ``;
+            for(let i = 0; i < visibleQuests.length; i++)
+            {
+                elt += `<div id="area${i}" class="areaQuest"> <h3> Quests in ${visibleQuests[i].name} </h3> <div class="questHolder"> ` 
+                for(let questIndex = 0; questIndex < visibleQuests[i].quests.length; questIndex++)
+                {
+                    let quest = visibleQuests[i].quests[questIndex];
+                    elt += `<p>${quest.name} </p> <input type="submit" onclick="startInteraction(${quest.identifier})" value="Start" /> `;
+                }
+                elt +=  `</div> </div>`
+            }
+            return elt;
+        }
+
+        function updateDestinations()
+        {
+            let ret = [];
+            let currentPosition =  createVector(campaign.position.x, campaign.position.y);
+            for(let index = 0; index < worldMap.length; index++)
+            {
+                let mapArea = worldMap[index];
+                if(mapArea.isDestination && !mapArea.isHidden && !intersects(currentPosition, mapArea.shape))
+                {
+                    let centr = centroid(mapArea);
+                    centr = createVector(centr.x, centr.y);
+                    let sub = centr.copy().sub( currentPosition );
+                    let distance = floor(sub.mag()) - mapArea.radius;
+                    let movementVector = sub.normalize().setMag(partySpeed);
+                    movementVector = { x : floor(movementVector.x), y: floor(movementVector.y) };
+                    ret.push({"name" : mapArea.name, "destination" : centr, "distance" : floor(distance) })
+                }
+            }
+            return ret;
+        }
+
+        function getDestinationsHTML()
+        {
+            let ds = visibleDestinations;
+            let elt = `<div> <h3> Destinations </h3>`;
+            for(let i = 0; i < ds.length; i++)
+            {
+                let d = ds[i].distance;
+                timeToTravel = getTimeToReachHTML(d);
+                elt += `
+                <div id="destination${i}" class="destinationHolder"> 
+                    <p class="destinationP">${ds[i].name} - ${getDistanceUnit(d).value} ${getDistanceUnit(d).unit} - (${timeToTravel}) </p> 
+                </div> </div>` 
+            }
+            return elt;
+        }
+
+        function getTimeToReachHTML(distance)
+        {
+            let timeToTravel = floor( distance  / (partySpeed *10) )
+            if(timeToTravel / 60 > 1)
+            {
+                if(timeToTravel/60 < 10)
+                {
+                    if(timeToTravel % 60 < 10)
+                        return `0${floor(timeToTravel/60)}:0${timeToTravel%60} `;
+                    else
+                        return `0${floor(timeToTravel/60)}:${timeToTravel%60} `;
+                }
+                else
+                {
+                    if(timeToTravel % 60 < 10)
+                        return `${floor(timeToTravel/60)}:0${timeToTravel%60} `;
+                    else
+                        return `${floor(timeToTravel/60)}:${timeToTravel%60} `;
+                }
+            }
+            else
+            {
+                if(timeToTravel < 10)
+                    return `00:0${timeToTravel}`
+                else
+                    return `00:${timeToTravel}`
+            }
+        }
+
+        function getMenuHTML()
+        {
+            if(activeTab == "Navigation")
+            {
+                return `<button class="activeMenuButton" > Navigation </button>
+                        <button class="inactiveButton" onclick="switchTab('Equipment')"> Equipment </button>
+                        <button class="inactiveButton" onclick="switchTab('Inventory')"> Inventory </button>
+                        <button class="inactiveButton" onclick="saveCampaign()" > Save </button>`
+            }
+            else if(activeTab == "Equipment")
+            {
+                return `<button class="inactiveButton" onclick="switchTab('Navigation')"> Navigation </button>
+                        <button class="activeMenuButton" > Equipment </button> 
+                        <button class="inactiveButton" onclick="switchTab('Inventory')"> Inventory </button>
+                        <button class="inactiveButton" onclick="saveCampaign()" > Save </button>`
+            }
+            else if(activeTab == "Inventory")
+            {
+                return `<button class="inactiveButton" onclick="switchTab('Navigation')"> Navigation </button>
+                        <button class="inactiveButton" onclick="switchTab('Equipment')" > Equipment </button> 
+                        <button class="activeMenuButton" > Inventory </button>
+                        <button class="inactiveButton" onclick="saveCampaign()" > Save </button>`
+            }
+            else
+            {
+                return `<button class="inactiveButton" onclick="switchTab('Navigation')"> Navigation </button>
+                        <button class="inactiveButton" onclick="switchTab('Equipment')" > Equipment </button> 
+                        <button class="inactiveButton" onclick="switchTab('Inventory')" > Inventory </button>
+                        <button class="inactiveButton" onclick="saveCampaign()" > Save </button>`
+            }
+        }
+        
+        function switchEquipment(key, name)
+        {
+            let c = character.toJSON();
+            c = JSON.parse(c);
+            if(name == "---")
+            {
+                c.equipment[key] = "---";
+            }
+            else
+            {
+                for(let i = 0; i < inventory.length; i++)
+                {
+                    let item = inventory[i];
+
+                    if(item.name == name)
+                    {
+                        c.equipment[key] = item;
+                    }
+                }
+            }
+            character = new Troop(c);
+            party[characterIndex] = JSON.parse(character);
+            campaign.party = party;
+        }
+        
+        function writeChar()
+        {
+            writeEquipmentSelects();
+            writeCharacterInfo();
+        }
+        
+        function writeEquipmentSelects()
+        {
+            let div = ``;
+            for(let i = 0; i < equipmentSlots.length; i++)
+            {
+                let key = equipmentSlots[i];
+
+                div += `<p> ${key} </p> <select onchange="switchEquipment('${key}', this.value); writeChar()">`
+                let options = `<option value="---"> --- </option>`
+
+                for(let i = 0; i < inventory.length; i ++)
+                {
+                    let item = inventory[i];
+                    if( ! (key == "Both Hands" && (character.equipment["Right Hand"] && character.equipment["Right Hand"] != "---" || character.equipment["Left Hand"] && character.equipment["Left Hand"] != "---")) )
+                    {
+                        if(!(key == "Left Hand" && character.equipment["Both Hands"] && character.equipment["Both Hands"] != "---" || key === "Right Hand" && character.equipment["Both Hands"] && character.equipment["Both Hands"] != "---" ) )
+                        {
+                            if(item.slots && item.slots.includes(key))
+                            {
+                                options += `<option value="${item.name}" `
+                                if(character.equipment[key] && character.equipment[key].name && item.name == character.equipment[key].name)
+                                {
+                                    options += `selected="selected"`;
+                                }
+                                options+= `> ${item.name} </option>`
+                            }
+                        }
+                    }
+                }
+                div+= `${options} </select>`
+            }
+            document.querySelector(`#equipmentSelector`).innerHTML = div;
+        }
+        
+        function writeCharacterInfo()
+        {
+            // Write Troop selector
+            let div = `<h3> ${character.name} </h3> <select onchange="switchCharacter(this.value)" >`;
+            for(let i = 0; i < party.length; i++)
+            {
+                let opt = `<option value="${i}" `
+                if(i == characterIndex)
+                {
+                    opt += `selected="selected" `
+                }
+                opt+=`> ${party[i].name} </option>`
+                div += `${opt}`
+            }
+            div += `</select>`;
+            // ARMOR CLASS
+            div += `<div class="armorClass"> <p class="tCenter"> <b class="white" > Armor Class : </b>  ${character.getArmorClass()} `;
+            if(character.armorClass.base)
+            {
+                div += `( ${character.armorClass.base} `;
+                if(character.armorClass.ability)
+                    div += `+ ${character.armorClass.ability}`;
+                if(character.armorClass.maximum)
+                    div += ` ( Maximum : ${character.armorClass.maximum} )`;
+                if(character.armorClass.bonus)
+                    div += ` + ${character.armorClass.bonus}`; 
+            }
+            div += ` ) </p> </div>`
+
+            // HIT POINTS
+            div += `<div class="hitPoints"> <p class="tCenter"> <b class="white" > Hit Points : </b> ${character.hitPoints.dieAmount}d${character.hitPoints.dieType} + ${character.hitPoints.bonus} </p> </div> `
+            
+            // ABILITY SCORES
+            div += `<div class="abilityScore">`;
+            for(let ability in character.abilityScores){ div += `<p class="tCenter"> ${ability} </p>`;}
+            for(let ability in character.abilityScores){ div += `<p class="tCenter"> ${character.abilityScores[ability].score} ( ${character.abilityScores[ability].bonus} )</p>`}
+            div += `</div>`
+
+            // POOLS
+            let poolCount = 0;
+            div += `<div class="pools"> <b class="white" > Pools : </b> `
+            for(let key in character.pools)
+            {
+                div += `<p>You have access to ${character.pools[key]} ${key}. </p> `
+                poolCount++;
+            }
+            if(poolCount == 0){div+= `There are no Pools available to the Troop.`}
+            div += `</div>`
+
+            // CONDITIONS
+            div += `<div class="conditions"> <b class="white" > Conditions : </b>`
+            if(character.conditions.length == 0)
+            {
+                div += ` There are no Conditions affecting the Troop.`
+            }
+            for(let i = 0; i < character.conditions.length; i++)
+            {
+                let cond = new Condition(character.conditions[i])
+                div += `<p>${cond.name} <br/> ${cond.describe()} </p> `
+            }
+            div += `</div>`
+
+            // ACTIONS
+            div += `<div class="actions"> <b class="white" > Actions : </b>`
+            if(character.actions.length == 0)
+            {
+                div += ` There are no Actions available to the Troop.`
+            }
+            for(let i = 0; i < character.actions.length; i++)
+            {
+                let a = new Action(character.actions[i])
+                if(a.name !== "Dash" && a.name !== "Dodge" && a.name !== "Help" )
+                div += `<p>${a.name} <br/> ${a.describe()} </p> `
+            }
+            div += `</div>`
+            document.querySelector(`#characterInfo`).innerHTML = div;
+        }
+
+        function startInteraction(id)
+        {
+            switchTab("Interaction");
+            let interaction;
+            let ints = WorldData.get("Scripted Interactions");
+            for(let i = 0 ; i < ints.length; i++)
+            {
+                if(ints[i].identifier == id)
+                {
+                    interaction = ints[i];
+                }
+            }
+
+            document.querySelector(`#interactionText`).innerHTML = `<h3> ${interaction.name} </h3> <p> ${interaction.text} </p>`;
+            let optionButtons = ``;
+            for(let opts = 0; opts < interaction.options.length; opts++)
+            {
+                let option = interaction.options[opts];
+                if(option.leadsToCampaign)
+                {
+                    optionButtons += `<button onclick="switchTab('Navigation')" > ${option.text} </button>`
+                }
+                if(option.leadsToInteraction)
+                {
+                    optionButtons += `<button onclick="startInteraction(${option.leadsToInteraction})" > ${option.text} </button>`
+                }
+                if(option.leadsToCombat)
+                {
+                    optionButtons += `<button onclick="window.location.href='${SERVER}game.html?campaignID=${option.leadsToCombat}'" > ${option.text} </button>`
+                }
+                if(option.leadsToVendor)
+                {
+                    optionButtons += `<button onclick="startVendor(${option.leadsToVendor})" > ${option.text} </button>`
+                }
+                if(option.reward)
+                {
+
+                }
+            }
+            document.querySelector(`#interactionOptions`).innerHTML = optionButtons;
+        }
+        
+        function writeInventory()
+        {
+            writeItemsList("inventoryTab", campaign.inventory);
+        }
+
+        function startVendor(id)
+        {
+            switchTab("Vendor");
+            let vendor;
+            let vends = WorldData.get("Vendors");
+            for(let i = 0 ; i < vends.length; i++)
+            {
+                if(vends[i].identifier == id)
+                {
+                    vendor = vends[i];
+                }
+            }
+            let items = vendor.items;
+            writeItemsList("vendorsTab", items, vendor);
+            writeInventory();
+        }
+
+        function writeItemsList(id, itemsList, vendor)
+        {
+            let startElt = ``;
+            if(vendor && vendor.gold){startElt = ` - Available Currency : <b class="gold">${vendor.gold} Gold - </b>`}
+            else {startElt = `<b class="white"> - Your Inventory - </b>` }
+
+            let listElt = `<p class="tCenter" style="grid-column:1/3;"> ${startElt} </p>
+            <input type="text" placeholder="Filter Name" id="filterName${id}" onchange='writeItemsList("${id}", ${JSON.stringify(itemsList)}, ${JSON.stringify(vendor)})'/> 
+            <input type="text" placeholder="Filter Slots" id="filterSlots${id}" onchange='writeItemsList("${id}", ${JSON.stringify(itemsList)}, ${JSON.stringify(vendor)})'/>
+            <p class="fullRow"> </p>`;
+            for(let i = 0 ; i < itemsList.length; i ++)
+            {
+                let item = itemsList[i];
+                let ii = JSON.stringify(item); // ii can be passed as parameter for the item into a onclick='touchItem(${ii})' 
+                let filter = document.querySelector(`#filterName${id}`); let filterSlots = document.querySelector(`#filterSlots${id}`);
+
+                let itemPrice = item.cost;
+                let itemSlots = item.slots;
+                let canAfford = itemPrice < campaign.points.gold;
+                let buttonToggle = ``;
+                if(item.cost && canAfford){buttonToggle = `<button class="tCenter gold" onclick='buyItem(${ii}, ${vendor.identifier})'>${getCurrency(item.cost)} </button>`}
+                if(item.cost && canAfford== false){buttonToggle = `<p class="tCenter gold" >${getCurrency(item.cost)} </p>`}
+
+                let slotsToggle = ``;
+                if(itemPrice && itemSlots) {slotsToggle = `<p class="itemSlotsVend"> ${itemSlots.slice(0, itemSlots.length -2)} </p> `}
+                if(!itemPrice && itemSlots !== "Consumable"){slotsToggle = `<p class="itemSlotsInv"> ${itemSlots.slice(0, itemSlots.length -2)} </p> `}
+                if(!itemPrice && itemSlots == "Consumable"){slotsToggle = `<button class="itemSlotsInv" onclick='consumeItem(${ii})'> Consume </button> `}
+
+                if((!filter || !filter.value || item.name.includes(filter.value)) && (!filterSlots || !filterSlots.value || item.slots.includes(filterSlots.value)))
+                {
+                    let divElt = `<div id="weapon${i}" class="itemHolder" onclick="simpleToggle('modifiers${i}')" >
+                                    <p class="itemName"> ${item.name} </p>
+                                    ${slotsToggle}
+                                    ${buttonToggle} 
+                                    <div id="modifiers${i}" class="modHolder"> `;
+                    if(item.modifiers)
+                    {
+                        item.modifiers.forEach(m => 
+                        {
+                            divElt += getModifierItemDescription(m)
+                        });
+                    }
+                    divElt += `</div> </div>`
+                    listElt += `${divElt}`;
+                }
+            }
+            document.querySelector(`#${id}`).innerHTML = listElt ;
+        }
+
+        function buyItem(itemJSON, vendorID)
+        {
+            let item = itemJSON
+
+            // EDIT WORLD VENDOR
+            let vends = WorldData.get("Vendors");
+            for(let i = 0 ; i < vends.length; i++)
+            {
+                if(vends[i].identifier == vendorID)
+                {
+                    vends[i].gold = Number.parseFloat(vends[i].gold) + Number.parseFloat(item.cost)
+                    for(let it = 0; it < vends[i].items; it++)
+                    {
+                        if(vends[i].items[it].name == item.name)
+                        {
+                            if(item.quantity === undefined || item.quantity == 1)
+                            {
+                                vends[i].items.splice(it,1);
+                            }
+                            else
+                            {
+                                vends[i].items[it].quantity = vends[i].items[it].quantity - 1;
+                            }
+                        }
+                    }
+                }
+            }
+            let WORLD_STORAGE = WorldData.getWorldData();
+            WORLD_STORAGE["Vendors"] = vends;
+            localStorage.world = JSON.stringify(WORLD_STORAGE);
+
+            // EDIT SAVE
+            campaign.points.gold -= item.cost;
+            item.cost = undefined;
+            campaign.inventory.push(item);
+
+            // REWRITE DOM
+            writeInventory();
+            writeChar();
+            startVendor(vendorID);
+        }
+        
+        function getModifierItemDescription(itemModifier)
+        {
+            let divElt = ``;
+            if(itemModifier.type == "abilityScoreIncrease")
+            {
+                divElt += `<p> <b class="white"> Ability Score Increase </b> <br/> Your ${itemModifier.key} score increases by ${itemModifier.value}`
+            }
+            if(itemModifier.type == "armorClass")
+            {
+                divElt += `<p> <b class="white"> Armor </b> <br/> Your Armor Class becomes ${itemModifier.value.base}`
+                if(itemModifier.value.ability){ divElt += ` + ${itemModifier.value.ability} `}
+                if(itemModifier.value.maximum){ divElt += `(Maximum :  ${itemModifier.value.maximum})`}
+                if(itemModifier.value.bonus){ divElt += ` + ${itemModifier.value.bonus}`}
+            }
+            if(itemModifier.type == "armorClassBonus")
+            {
+                divElt += `<p> <b class="white"> Armor Class Bonus </b> <br/> Your Armor Class increases by ${itemModifier.value}`;
+            }
+            if(itemModifier.type == "actionMod")
+            {
+                divElt += `<p> <b class="white"> Action Modification </b> <br/> If the Troop has an Action with `
+                for(let key in itemModifier.filter)
+                {
+                    divElt += `key ${key} set to ${itemModifier.filter[key]}, `
+                }
+                for(let key in itemModifier.value)
+                {
+                    divElt += `that Action's ${key} is modified.`
+                }
+            }
+            if(itemModifier.type == "action")
+            {
+                let a = new Action(itemModifier.value);
+                divElt += `<p> <b class="white"> ${a.name} </b> <br/> ${a.describe()} </p>`;
+            }
+            if(itemModifier.type == "condition")
+            {
+                let c = new Condition(itemModifier.value);
+                divElt += `<p> <b class="white"> ${c.name} </b> <br/> ${c.describe()} </p>`
+            }
+            if(itemModifier.type == "pool")
+            {
+                for(let key in itemModifier.value)
+                {
+                    divElt += `<p> You gain <b class="white"> ${itemModifier.value[key]}  ${key} </b>. </p>`;
+                }
+            }
+            if(itemModifier.type == "hitDieIncrease")
+            {
+                divElt += `<p> <b class="white"> Hit Die Increase </b><br/> Your Hit Point dice increases by ${itemModifier.value} </p>`
+            }
+            if(itemModifier.type == "hitDieAmount")
+            {
+                divElt += `<p> <b class="white"> Extra Hit Die </b><br/> You gain an extra Hit Points die. </p>`
+            }
+            return divElt;
+        }
+        
+        /* draw() is called at several times per second after setup() has been run */
+        function draw()
+        {
+            background(50);
+            if(keyIsDown(32))
+            {
+                campaign.destination = undefined;
+                campaign.state = "Idle";
+            }
+            for(let areaIndex = 0; areaIndex < worldMap.length; areaIndex++)
+            {
+                if(!worldMap[areaIndex].isHidden)
+                {
+                    camera.displayArea(worldMap[areaIndex],true, true);
+                }
+            }
+            updateParty();
+
+            camera.displaySimpleOverlay();
+        }
+
+        function updateParty()
+        {
+            let fr = frameRate();
+            if(fr !== 0 && campaign.destination)
+            {
+                let start = createVector(campaign.position.x, campaign.position.y);
+                let end = createVector(campaign.destination.x, campaign.destination.y);
+                let sub = end.copy().sub(start)
+                let d = sub.mag();
+                sub.setMag( partySpeed * 60 / (fr * 6) );
+
+                let distanceToStop = floor(partySpeed /fr);
+                if(campaign.destination.radius)
+                    distanceToStop += campaign.destination.radius;
+                if(d > distanceToStop )
+                {
+                    campaign.position.x += floor( sub.x );
+                    campaign.position.y += floor( sub.y );
+                }
+                else
+                {
+                    campaign.destination = undefined;
+                    campaign.state = "Idle";
+                }
+            }
+            let entity = {name: campaign.name, position : campaign.position, dimension : partySize};
+            camera.anchor = entity;
+            camera.setMapPosition();
+            camera.displayEntity(entity);
+            camera.displayFocus(entity, true, true);
+        }
+
+        /**mousePressed() is called whenever the mouse is pressed*/
+        function mousePressed(event)
+        {
+            if(eventManagement.restrictToCanvas(event) && event.buttons == 1)
+            {
+                let pos = camera.screenPointToMapPoint(mouseX, mouseY);
+                campaign.destination = {x : pos.x, y : pos.y};
+                campaign.state = "Moving";
+            }
+        }
+
+        /**mouseWheel() is called whenever the mouse is pressed*/
+        function mouseWheel(event)
+        {
+            camera.zoom(event);
+        }
+
+        function saveCampaign()
+        {
+            saveJSON(campaign, `${campaign.party[0].name}_Campaign.json`);
+        }
+        </script>
+
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-{scpre : 8}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PseudoRandom - Dev Sandbox</title>
+
+    <!-- p5 
+    <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/addons/p5.dom.min.js"></script>-->
+    <!-- local p5-->
+    <script language="javascript" type="text/javascript" src="local dependencies/p5.min.js"></script>
+    <script language="javascript" type="text/javascript" src="local dependencies/p5.dom.min.js"></script>
+
+    <!-- FONTS -- IRRELEVANT IN LOCAL-->
+    <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"rel="stylesheet">
+
+    <!-- Pure CSS 
+    <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous"> -->
+    <!-- Local Pure CSS -->
+    <link rel="stylesheet" href="local dependencies/purecss.css"> 
+    
+    <link href="./style/main.css" rel="stylesheet" />
+    <link href="./style/campaignStart.css" rel="stylesheet" />
+</head>
+<body>
+    <header>
+        <h4 class="headerItem" onclick="window.location.href = `${SERVER}index.html`" >PseudoRandom</h4>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}editorEncounter.html`">Encounter Editor</p>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}editorTroop.html`">Troop Editor</p>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}game.html`">Game</p>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}campaignStart.html`">Campaign</p>
+    </header>
+    <div id="saveMenuTab">
+        <h2 style="text-align:center;"> Campaign Mode </h2>
+
+        <div>
+            <label for="load">
+                    Load Campaign
+                    <input id="load" type="file" onchange="CampaignData.storeToLocal(this.files); window.location.href ='./campaign.html'" />
+            </label>
+        </div>
+
+        <button onclick="toggleTab('campaignCreation', 'grid'); toggleTab('saveMenu', 'none');"> 
+            Start New 
+        </button>
+
+        <div id="continue"> 
+        </div>       
+    </div>
+
+    
+    <div id="campaignCreationTab" >
+        <h1 class="fullRow"> PseudoRandom Campaign  </h1>
+    
+        <h4> Main Character Name </h4> <input type="text" id="name" placeholder="Main Character name..." onchange="character.name = this.value" />
+        <input type="color" id="partyColor" style="display:block;height:100%;width:50%; padding:0;margin:0;border:0;outline:none;margin-left : 25%;" />
+        <h4 > Main Character Stereotype </h4>        <select id="raceSelection" onchange="switchRace(this.value)"> <option value="---"> --- </option> </select>
+        
+        <p class="fullRow"></p>
+
+        <div id="abilityScore"> </div>
+        <p class="fullRow"></p>
+        <div id="modifiersDisplay" class="fullRow"> </div>
+
+        <button id="returnButton" onclick="toggleTab('saveMenu', 'grid'); toggleTab('campaignCreation', 'none');"> Return </button> 
+        <button id="startCampaignButton" onclick="startCampaign()"> Start Campaign </button>
+    </div>
+
+    <div id="scripts">
+        <!-- Camera is the class responsible for drawing most things on the canvas. -->
+        <script src="scripts/Camera.js"> </script>
+        <!-- Troop is the class allowing to roll dices and basically play the Combat Encounters. -->
+        <script src="scripts/Troop.js"> </script>
+        <!-- Util is basically all the shared code, so yeah, it's always gun'be messy there. -->
+        <script src="scripts/util.js"> </script>
+
+        <!-- local dependencies are Data Files -->
+        <script src="local dependencies/mockItems.js"> </script>
+
+        
+        <script>
+        let stereotypes = WorldData.get("Sterotypes");
+        let character = 
+        {
+            name : "",
+            position : {"x" : 0, "y" : 0},
+            dimension : {"x" : 75, "y":75},
+            armorClass : {"base" : 10, "ability" : "Dexterity" },
+            speed : 900,
+            actions : [], 
+            pools : {},
+            size : "Medium",
+            conditions : []
+        };
+        let selections = [];
+        let score = 27;
+        let abilities = 
+        {
+            "Strength" : {score : 8, modifiers : 0},
+            "Dexterity" : {score : 8, modifiers : 0},
+            "Constitution" : {score : 8, modifiers : 0},
+            "Intelligence" : {score : 8, modifiers : 0},
+            "Wisdom" : {score : 8, modifiers : 0},
+            "Charisma" : {score : 8, modifiers : 0},
+        };
+
+        function setup()
+        {
+            noCanvas();
+            document.querySelector('#raceSelection').innerHTML = writeRacesOptions();
+            switchRace(0);
+            if(localStorage.campaign !== undefined)
+            {
+                let name = CampaignData.get("name")
+                let elt = `<button type="submit" onclick="window.location.href ='${SERVER}campaign.html'"> Continue ${name}</button>` 
+                document.querySelector(`#continue`).innerHTML = elt;      
+            }
+        }
+        function startCampaign()
+        {
+            if(character.name === "")
+            {
+                alert(`Please, set your Character name.`)
+            }
+            else
+            {
+                character.abilityScores = {};
+                for(let key in abilities)
+                {
+                    character.abilityScores[key] = {};
+                    character.abilityScores[key].score = abilities[key].score + abilities[key].modifiers;
+                    character.abilityScores[key].bonus = floor((character.abilityScores[key].score - 10) /2 )
+                }
+                character.stk = color(document.querySelector(`#partyColor`).value)
+                
+                let c = new Troop(character);
+                c = JSON.parse(c.toJSON());
+
+                let campaignData = {
+                    party : [],
+                    inventory : [],
+                    name : character.name + "'s Party", 
+                    points : {gold : 0, experience : 0, renown : 0},
+                    timestamp : Date.now(),
+                    state : "Ilde",
+                    position : {x : 1250000, y : 1250000}
+                };
+                campaignData.party.push(c);
+                localStorage.campaign = JSON.stringify(campaignData, null, 4);
+                window.location.href = SERVER + "campaign.html"
+            }
+        }
+
+        function addModifier( modifier )
+        {
+            switch (modifier.type)
+            {
+                case "abilityScoreIncrease" :
+                    abilities[modifier.key].modifiers += Number.parseInt(modifier.value);
+                    break;
+                case "size" :
+                    character.size = modifier.value;
+                    character.dimension = getDimensionFromSizeCategory(modifier.value);
+                    break;
+                case "armorClass" :
+                    character.armorClass = {"base" : modifier.value.base, "ability" : modifier.value.ability};
+                    break;
+                case "speed" :
+                    character.speed = modifier.value;
+                    break;
+                case "pool" : 
+                    let p = getPoolWithModifier(modifier.value);
+                    character.pools[p.key] = p.value;
+                    break;
+                case "action" :
+                    character.actions.push(modifier.value);
+                    break;
+                case "condition" :
+                    character.conditions.push(modifier.value);
+                    break;
+            }
+        }
+        function getPoolWithModifier( pool )
+        {
+            for(let key in pool) // We normally have 1 key, but don't know its name.
+            {
+                if(!character.pools[key]) // If the pool is empty right now
+                    return {"key" : key, "value" : pool[key]};
+                else // If the pool isn't empty, we add the values.
+                    return {"key" : key, "value" : pool[key] + character.pools[key] };
+            }
+        }
+        function getArmorClass ( modifier )
+        {
+            if(modifier.base )
+            {
+                if(modifier.ability)
+                {
+                    let mod = floor( (abilities[modifier.ability].score + abilities[modifier.ability].modifiers - 10) / 2 );
+                    if(modifier.maximum)
+                    {
+                        if(mod > modifier.maximum)
+                        {
+                            mod = modifier.maximum;
+                        }
+                    }
+                    return modifier.base + mod;
+                }
+                else
+                {
+                    return modifier.base;
+                }
+            }
+        }
+
+        function writeRacesOptions()
+        {
+            let elt = ``
+            for(let i = 0; i < stereotypes.length; i++)
+            {
+                let stereo = stereotypes[i];
+                elt += `<option value="${i}"> ${stereo.name} </option>`
+            }
+            return elt;
+        }
+        function switchRace(id)
+        {
+            character = 
+            {
+                "name" : character.name,
+                "dimension" : {"x" : 75, "y":75},
+                "armorClass" : {"base" : 10, "ability" : "Dexterity" },
+                "speed" : 900,
+                "actions" : [], 
+                "pools" : {}, 
+                "conditions" : []
+            }
+
+            let stereo = stereotypes[id];
+            for(let a in abilities)
+            {
+                abilities[a].modifiers = 0;
+            }
+            for(let key = 0; key < stereo.modifiers.length; key++)
+            {
+                let mod = stereo.modifiers[key];
+                switch(mod.type)
+                {
+                    case "abilityScoreIncrease" :
+                        abilities[mod.key].modifiers = Number.parseInt(mod.value);
+                        break;
+                    
+                    case "size" :
+                        character.dimension = getDimensionFromSizeCategory(mod.value);
+                        break;
+                        
+                    case "armorClass" :
+                        character.armorClass = {"base" : mod.value.base, "ability" : mod.value.ability};
+                        break;
+
+                    case "speed" :
+                        character.speed = mod.value;
+                        break;
+                    case "pool" :
+                        for(let key in mod.value)
+                        {
+                           character.pools[key] = mod.value[key];
+                        }
+                        break;
+
+                    case "action" :
+                        character.actions.push(mod.value);
+                        break;
+
+                    case "condition" :
+                        character.conditions.push(mod.value);
+                        break;
+                }
+            }
+            document.querySelector('#abilityScore').innerHTML = writeScoresHTML();
+            document.querySelector('#modifiersDisplay').innerHTML = writeModifiers(id);
+        }
+
+        function writeModifiers(id)
+        {
+            let elt = `<h3> Stereotype Modifiers </h3>`;
+            let stereo = stereotypes[id];
+            for(let key in stereo.modifiers)
+            {
+                let mod = stereo.modifiers[key];
+                // Loop through all the keys in the modifier
+                elt += `${getModifierHTML(mod, key, id)}`
+            }
+            return elt;
+        }
+        function getModifierHTML(mod, id, raceId)
+        {
+            let ret = ``;
+            switch(mod.type)
+            {
+                case "abilityScoreIncrease" :
+                    //return `<p><b>Ability Score Bonus :  </b>  You gain ${mod.value} ${mod.key}. </p>`
+                    break;
+                
+                case "size" :
+                    return `<p style="font-size : 1.2rem;"><b>Size :  </b>  Your size is ${mod.value}. </p>`
+                    break;
+                    
+                case "armorClass" :
+                    if(!mod.value.ability)
+                        return `<p style="font-size : 1.2rem;"><b>Armor Class : </b>  Your Armor Class is ${mod.value.base}. </p>`
+                    else
+                        return `<p style="font-size : 1.2rem;"><b>Armor Class : </b>  Your Armor Class is ${mod.value.base} + your ${mod.value.ability} modifier. </p>`
+                    break;
+
+                case "speed" :
+                    return `<p style="font-size : 1.2rem;"><b>Movement Speed :  </b>  Your speed is ${mod.value / 100} meters per turn. </p>`
+                    break;
+                case "pool" :
+                    for(let key in mod.value)
+                    {
+                        return `<p style="font-size : 1.2rem;"><b>Pool :  </b> You gain the use of ${mod.value[key]} ${key}. </p>`
+                    }
+                    break;
+
+                case "action" :
+                    let a = new Action(mod.value);
+                    return `<p style="font-size : 1.2rem;"><b>Action - ${mod.value.name}  : </b> 
+                            ${a.describeTarget()} ${a.describeSuccess()}
+                            ${a.describeDamage()} ${a.describeUses()}
+                            ${a.describeCondition()} </p>`
+                    break;
+
+                case "condition" :
+                    let c = new Condition(mod.value);
+                    return `<p style="font-size : 1.2rem;"><b>Trait - ${mod.value.name} :  </b> ${c.describe()} </p>`
+                    break;
+            }
+            return ret;
+        }
+
+        function writeScoresHTML()
+        {
+            let elt = `<br/> <h4 style="display:inline;" > Main Character Ability Scores </h4> <p style="font-size:1.1rem;">  You can assign ${score} more points to your Abilities. You can't go higher than 16 or below 8 Base score. <br/> </p>`; 
+            elt += `<table id="abilityScores"><tbody>`;
+            elt += `
+            <tr> <th style="border-right:1px solid rgb(250,180,60);"></th> 
+            <th></th> <th> Strength </th> <th style="border-right: 1px solid rgb(250,180,60);"></th> 
+            <th></th> <th> Dexterity </th> <th style="border-right: 1px solid rgb(250,180,60);"></th> 
+            <th></th> <th> Constitution </th> <th style="border-right: 1px solid rgb(250,180,60);"></th> 
+            <th></th> <th> Intelligence </th> <th style="border-right: 1px solid rgb(250,180,60);"></th> 
+            <th></th> <th> Wisdom </th> <th style="border-right: 1px solid rgb(250,180,60);"></th> 
+            <th></th> <th> Charisma </th> <th></th> </tr> `;
+            elt += `
+            <tr style="border-bottom:1px solid rgb(250,180,60);"> <th style="border-right:1px solid rgb(250,180,60);"> Base </th> 
+            <th> <input type="submit" value="-" onclick='decreaseAbility("Strength")' style="padding-top:0; padding-bottom:0; margin-bottom:0;" /> </th> 
+            <th> ${abilities["Strength"].score} </th> 
+            <th style="border-right: 1px solid rgb(250,180,60);"> <input type="submit" value="+" onclick='increaseAbility("Strength")' style="padding-top:0; padding-bottom:0; margin-bottom:0;" /></th> 
+            <th> <input type="submit" value="-" onclick='decreaseAbility("Dexterity")' style="padding-top:0; padding-bottom:0; margin-bottom:0;" /></th> 
+            <th> ${abilities["Dexterity"].score}  </th> 
+            <th style="border-right: 1px solid rgb(250,180,60);"> <input type="submit" value="+" onclick='increaseAbility("Dexterity")' style="padding-top:0; padding-bottom:0; margin-bottom:0;" /></th>
+            <th> <input type="submit" value="-" onclick='decreaseAbility("Constitution")' style="padding-top:0; padding-bottom:0; margin-bottom:0;" /></th> 
+            <th> ${abilities["Constitution"].score}  </th> 
+            <th style="border-right: 1px solid rgb(250,180,60);"> <input type="submit" value="+" onclick='increaseAbility("Constitution")' style="padding-top:0; padding-bottom:0; margin-bottom:0;" /></th>
+            <th> <input type="submit" value="-" onclick='decreaseAbility("Intelligence")' style="padding-top:0; padding-bottom:0; margin-bottom:0;" /></th> 
+            <th> ${abilities["Intelligence"].score}  </th> 
+            <th style="border-right: 1px solid rgb(250,180,60);"> <input type="submit" value="+" onclick='increaseAbility("Intelligence")' style="padding-top:0; padding-bottom:0; margin-bottom:0;" /></th>
+            <th> <input type="submit" value="-" onclick='decreaseAbility("Wisdom")' style="padding-top:0; padding-bottom:0; margin-bottom:0;" /></th> 
+            <th> ${abilities["Wisdom"].score}  </th> 
+            <th style="border-right: 1px solid rgb(250,180,60);"> <input type="submit" value="+" onclick='increaseAbility("Wisdom")' style="padding-top:0; padding-bottom:0; margin-bottom:0;" /></th>
+            <th> <input type="submit" value="-" onclick='decreaseAbility("Charisma")' style="padding-top:0; padding-bottom:0; margin-bottom:0;" /> </th> 
+            <th> ${abilities["Charisma"].score}  </th> 
+            <th> <input type="submit" value="+" onclick='increaseAbility("Charisma")' style="padding-top:0; padding-bottom:0; margin-bottom:0;" /></th>
+            </tr> `;
+            elt += `
+            <tr style="border-bottom:1px solid rgb(250,180,60);"> <th style="border-right:1px solid rgb(250,180,60);"> Selections </th> 
+            <th></th> <th style="font-size:1rem;" > ${abilities["Strength"].modifiers} </th> <th style="border-right: 1px solid rgb(250,180,60);"></th> 
+            <th></th> <th style="font-size:1rem;" > ${abilities["Dexterity"].modifiers} </th> <th style="border-right: 1px solid rgb(250,180,60);"></th> 
+            <th></th> <th style="font-size:1rem;" > ${abilities["Constitution"].modifiers} </th> <th style="border-right: 1px solid rgb(250,180,60);"></th> 
+            <th></th> <th style="font-size:1rem;" > ${abilities["Intelligence"].modifiers} </th> <th style="border-right: 1px solid rgb(250,180,60);"></th> 
+            <th></th> <th style="font-size:1rem;" > ${abilities["Wisdom"].modifiers} </th> <th style="border-right: 1px solid rgb(250,180,60);"></th> 
+            <th></th> <th style="font-size:1rem;" > ${abilities["Charisma"].modifiers} </th> <th></th> 
+            </tr>`;
+            elt += `
+            <tr> <th style="border-right:1px solid rgb(250,180,60);"> Total </th> 
+            <th></th> <th> <b style="color:white;" > ${abilities["Strength"].modifiers + abilities["Strength"].score } </b> </th> <th style="font-size:1rem; border-right: 1px solid rgb(250,180,60);"> ( ${ Math.floor((abilities["Strength"].modifiers + abilities["Strength"].score - 10) / 2) } ) </th> 
+            <th></th> <th> <b style="color:white;" > ${abilities["Dexterity"].modifiers + abilities["Dexterity"].score } </b> </th> <th style="font-size:1rem; border-right: 1px solid rgb(250,180,60);"> ( ${ Math.floor((abilities["Dexterity"].modifiers + abilities["Dexterity"].score - 10) / 2) } )</th> 
+            <th></th> <th> <b style="color:white;" > ${abilities["Constitution"].modifiers + abilities["Constitution"].score } </b> </th> <th style="font-size:1rem; border-right: 1px solid rgb(250,180,60);"> ( ${ Math.floor((abilities["Constitution"].modifiers + abilities["Constitution"].score - 10) / 2) } )</th> 
+            <th></th> <th> <b style="color:white;" > ${abilities["Intelligence"].modifiers + abilities["Intelligence"].score } </b> </th> <th style="font-size:1rem; border-right: 1px solid rgb(250,180,60);"> ( ${ Math.floor((abilities["Intelligence"].modifiers + abilities["Intelligence"].score - 10) / 2 )} )</th> 
+            <th></th> <th> <b style="color:white;" > ${abilities["Wisdom"].modifiers + abilities["Wisdom"].score } </b> </th> <th style="font-size:1rem; border-right: 1px solid rgb(250,180,60);"> ( ${ Math.floor((abilities["Wisdom"].modifiers + abilities["Wisdom"].score - 10) / 2) } )</th> 
+            <th></th> <th> <b style="color:white;" > ${abilities["Charisma"].modifiers + abilities["Charisma"].score } </b> </th> <th style="font-size:1rem;"> ( ${ Math.floor((abilities["Charisma"].modifiers + abilities["Charisma"].score - 10) / 2) } )</th> 
+            </tr>`;
+            elt += `</tbody></table>`
+            return elt;
+        }
+        function decreaseAbility(key)
+        {
+            if(abilities[key].score >= 9 && abilities[key].score <= 13)
+            {
+                score++;
+                abilities[key].score--;
+            }
+            else if(abilities[key].score >= 14 && abilities[key].score <= 16)
+            {
+                score+=2;
+                abilities[key].score--;
+            }
+            document.querySelector('#abilityScore').innerHTML = writeScoresHTML();
+        }
+        function increaseAbility(key)
+        {
+            if(abilities[key].score >= 8 && abilities[key].score <= 12)
+            {
+                if(score >= 1)
+                {
+                    score--;
+                    abilities[key].score++;
+                }
+            }
+            else if(abilities[key].score >= 13 && abilities[key].score <= 15)
+            {
+                if(score >= 2)
+                {
+                    score-=2;
+                    abilities[key].score++;
+                }
+            }
+            document.querySelector('#abilityScore').innerHTML = writeScoresHTML();
+        }
+        
+        
+        </script>
+    </div>
+</body>
+
+</html>

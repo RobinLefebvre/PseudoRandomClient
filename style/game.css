@@ -1,0 +1,106 @@
+/**The top-right side menu, which turns the tabs on/off */
+#menu
+{
+    background-color:rgba(0,0,0,0.3); 
+
+    grid-column: 24/24; 
+    grid-row:2/7; 
+
+    padding-top:1.7rem;
+
+    border-radius: 1rem; 
+    border-top-right-radius:0rem; 
+    border-bottom-right-radius:0rem;
+    border:1px solid rgb(240,180,60);
+
+    cursor : default; 
+}
+#menu input{ width:100%; font-size:1.1rem; background-color : rgba(0,0,0,0.5); border:none; outline:none;}
+
+/** Game tab : bottom right menu where you pick which game to play and which player to be*/
+#gameTab
+{
+    grid-column: 23/-1; 
+    grid-row:18/-1; 
+
+    cursor : default; 
+    background-color:rgba(0,0,0,0.3); 
+    border-top-left-radius:1rem; 
+
+    border:1px solid rgb(240,180,60);
+}
+#gameTab select{ width:90%; margin-left:5%; }
+#gameTab p{ padding-left:1rem; }
+#gameTab input{ width:90%; padding:0; padding-left:5%; padding-top:0.5rem; padding-bottom:0.5rem; border:none; background-color:rgba(0,0,0,0.7); }
+
+#turnTab
+{
+    cursor : default; 
+    padding-left:0.5rem; 
+    grid-column: 1/4; 
+    grid-row:2/15; 
+    display:none;
+}
+
+#troopTab
+{
+    grid-column: 5/23; 
+    grid-row:22/-1; 
+
+    cursor : default; 
+    background-color:rgba(0,0,0,0.7); 
+    border: 1px solid rgb(240,180,60); 
+    border-top-left-radius : 2rem; 
+    border-top-right-radius : 2rem; 
+    padding-left:0.5rem; 
+    display:none;
+}
+#troopTab #actionsTable
+{
+    width:100%; height:100%; 
+    table-layout:fixed;
+    border-spacing: 0.5rem;
+    border-collapse: separate;
+
+}
+#troopTab .actionButton
+{
+    width:100%; height: 100%;
+    font-size:1.2rem;
+    border-radius : 2rem; 
+    background-color:rgb(50,50,50); 
+    border:none;
+}
+
+#logsTab
+{
+    grid-column: 1/5; 
+    grid-row:17/-1; 
+
+    cursor : default; 
+    overflow:scroll; 
+    line-height: 1.15rem; 
+    font-size : 0.95rem; 
+    padding:0.5rem; 
+    padding-top:2rem; 
+    background-color:rgba(0,0,0,0.7); 
+    border: 1px solid rgb(240,180,60); 
+    border-top-left-radius : 2rem; 
+    border-top-right-radius : 2rem; 
+    padding-left:0.5rem; 
+    display:none;
+}
+#actionTab
+{
+    cursor : default; 
+    font-size : 1rem; 
+    line-height : 1.1rem; 
+    background-color:rgba(0,0,0,0.7);
+    border: 1px solid rgb(240,180,60); 
+    border-top-left-radius : 2rem; 
+    border-top-right-radius : 2rem; 
+    padding-left:0.5rem;
+    grid-column: 7/18; 
+    grid-row:18/22; 
+    display:none;
+}

@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>PseudoRandom - Game</title>
+    <title>PseudoRandom - Combat Encounter Tester</title>
+
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
 
     <!-- p5 
     <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
@@ -23,47 +25,33 @@
     <link rel="stylesheet" href="local dependencies/purecss.css"> 
     
     <link href="./style/main.css" rel="stylesheet" />
+    <link href="./style/game.css" rel="stylesheet" />
 </head>
 <body>
-    <!--<header>
-        <h4 class="headerItem" onclick="window.location.href = `${SERVER}index.html`" >TRPG - Prototype</h4>
-        <p class="headerItem" onclick="window.location.href = `${SERVER}editorEncounter.html`">Encounter Editor</p>
-        <p class="headerItem" onclick="window.location.href = `${SERVER}editorTroop.html`">Troop Editor</p>
-        <p class="headerItem" onclick="window.location.href = `${SERVER}game.html`">Game</p>
-    </header>-->
-
-    <div id="page_content" style="cursor : crosshair;">
+    <div id="page_content" style="cursor : crosshair; grid-row : 1/-1;">
         <!-- Menu toggles each tab.-->
-        <div id="menu" style="cursor : default; padding-top:0.5rem; background-color:rgba(0,0,0,0.7); grid-column: 24/24; grid-row:4/10; border-radius: 1rem; border-top-right-radius:0rem; border-bottom-right-radius:0rem;border:1px solid rgb(240,180,60);"> 
-            <input type="submit" value="Game" id="game" onclick="toggleTab(this.id)" style="width:100%; text-decoration: underline; font-size:1rem; background-color : rgba(0,0,0,0); border:none; outline:none;" /> <br/>
-            <input type="submit" value="Turn" id="turn" onclick="toggleTab(this.id)" style="width:100%; text-decoration: underline; font-size:1rem;  background-color : rgba(0,0,0,0); border:none; outline:none;" /> <br/>
-            <input type="submit" value="Troop" id="troop" onclick="toggleTab(this.id)" style="width:100%; text-decoration: underline; font-size:1rem;  background-color : rgba(0,0,0,0); border:none; outline:none;" /> <br/>
-            <input type="submit" value="Game Logs" id="logs" onclick="toggleTab(this.id)" style="width:100%; text-decoration: underline; font-size:1rem;  background-color : rgba(0,0,0,0); border:none; outline:none;" /> <br/>
+        <div id="menu"> 
+            <input type="submit" value="Game" id="game" onclick="toggleTab(this.id)" /> <br/>
+            <input type="submit" value="Turn" id="turn" onclick="toggleTab(this.id)" /> <br/>
+            <input type="submit" value="Troop" id="troop" onclick="toggleTab(this.id)" /> <br/>
+            <input type="submit" value="Game Logs" id="logs" onclick="toggleTab(this.id)" /> <br/>
         </div>
         <!--Game Tab allows to pick a Local Game, to pick a Player in that game or to Input an Online id of some sort. -->
-        <div id="gameTab" style="cursor : default; background-color:rgba(0,0,0,0.7); grid-column: 22/-1; grid-row:16/-1; border-top-left-radius:1rem; border:1px solid rgb(240,180,60);;">
-            <p style="padding-left:1rem;">Local Game</p>    <select id="encounter" style="width:90%; margin-left:5%;" onchange="game = {initiativeOrder: []}; writeGame(this.value); " > </select> 
-            <p style="padding-left:1rem;">Play As</p>       <select id="group" style="width:90%; margin-left:5%;" onchange="switchPlayer(this.value);"><option value="---"> --- </option> </select> 
-            <hr/>
-            <!-- TODO : generate some ID and fetch data from server to load that game's status. -->
-            <p style="padding-left:1rem;"> Online Game</p>  <input id="onlineGame" style="width:90%; padding:0; padding-left:5%; padding-top:0.5rem; padding-bottom:0.5rem; border:none; background-color:rgba(0,0,0,0.7);" type="text" placeholder="Enter Game ID..." onchange="getOnlineGame(this.value);" /> 
+        <div id="gameTab">
+            
         </div>
-        <!-- Turn Tab is populated by <scripts> with the Initiative Order updated according to the game's state -->
-        <div id="turnTab" style="cursor : default; padding-left:0.5rem; grid-column: 1/6; grid-row:2/15; display:none;">
-
-        </div>
-        <!-- Logs Tab is populated by <scripts> with the Game Log-->
-        <div id="logsTab" style="cursor : default; overflow:scroll; line-height: 1.15rem; font-size : 0.95rem; padding:0.5rem; padding-top:2rem; background-color:rgba(0,0,0,0.7); border: 1px solid rgb(240,180,60); border-top-left-radius : 2rem; border-top-right-radius : 2rem; padding-left:0.5rem; grid-column: 1/5; grid-row:15/-1; display:none;">
-
-        </div>
-        <!-- Action Tab is populated by <scipts> with the hovered Action's information -->
-        <div id="actionTab" style="cursor : default; font-size : 0.9rem; line-height : 1.1rem; background-color:rgba(0,0,0,0.7); border: 1px solid rgb(240,180,60); border-top-left-radius : 2rem; border-top-right-radius : 2rem; padding-left:0.5rem; grid-column: 7/18; grid-row:18/22; display:none;" >
         
-        </div>
-        <!-- Troop Tab is populated by <scipts> with the currently playing troop's information. -->
-        <div id="troopTab" style="cursor : default; background-color:rgba(0,0,0,0.7); border: 1px solid rgb(240,180,60); border-top-left-radius : 2rem; border-top-right-radius : 2rem; padding-left:0.5rem; grid-column: 5/20; grid-row:22/-1; display:none;">
+        <!-- Turn Tab is populated by <scripts> with the Initiative Order updated according to the game's state -->
+        <div id="turnTab"> </div>
 
-        </div>
+        <!-- Logs Tab is populated by <scripts> with the Game Log-->
+        <div id="logsTab"> </div>
+
+        <!-- Action Tab is populated by <scipts> with the hovered Action's information -->
+        <div id="actionTab"> </div>
+
+        <!-- Troop Tab is populated by <scipts> with the currently playing troop's information. -->
+        <div id="troopTab"></div>
 
     </div>
     <div id="scripts">
@@ -71,13 +59,15 @@
         <script src="scripts/Camera.js"> </script>
         <!-- Troop is the class allowing to roll dices and basically play the game. -->
         <script src="scripts/Troop.js"> </script>
+        <!-- AI is the class responsible for making Troop decisions. -->
+        <script src="scripts/AI.js"> </script>
         <!-- Util is basically all the shared code, so yeah, it's always gun'be messy there. -->
         <script src="scripts/util.js"> </script>
 
         <!-- This is responsible for both the game's canvas drawing and all the good bits. -->
         <script src="scripts/Canvas/gameMain.js"> </script>
         <!-- This is responsible for the DOM manipulations up there.  -->
-        <script src="scripts/DOM/gameDom.js"> </script>
+        <script src="scripts/DOM/gameDOM.js"> </script>
     </div>
 </body>
 

@@ -1,25 +1,34 @@
-let actionsAmount = 0;
-let traitsAmount = 0;
 let poolsAmount = 0;
 
+let selectedActions = [];
+let actions = [];
+const actionKeys = ["name", "uses", "reach", "areaEffect", "target",  "pool", "expandsPool","toHit", "toHitExtra", "onSuccess", "targetsUnconcious", "addCost", "damage", "damageAbility", "damageExtra", "damageType", "saveAbility", "saveDC", "saveCancelsDamage", "isVampiric"]
+
+let selectedConditions = [];
+let conditions = []
+const conditionKeys = ["name", "duration", "notDealt", "save", "saveDC", "damage", "moveMod", "resistances", "immunities", "vulnerabilities", "skipTurn", "addAction", "acBonus", "damageBonus", "toHitBonus", "charm", "recharge", "evade", "saveAdvantage", "saveDisadvantage", "advantageHit","disadvantageHit", "advantageTarget", "disadvantageTarget", "rerollHit", "rerollDamage", "areaEffect", "target"];
+
+let traitsAmount = 0;
+let traits = [];
+
+// Setup runs on load
 function setup()
 {
-    writeEdit();
+    writeTroopSelect();
+    rewriteActionsHTML();
 }
+
+// Packages all the data from the Form and inputs it into an Object, ready to be saved.
 function sendData()
 {
-    let data = LocalData.getLocalStorage()
     let t = {};
     t.name =  document.querySelector("#name").value;
     t.source =  document.querySelector("#source").value;
-    if(data[t.source] == undefined)
-    {
-        LocalData.createSource(t.source);
-        data = LocalData.getLocalStorage();
-    }
+
     t.type = document.querySelector("#type").value;
-    t.radius = document.querySelector("#radius").value;
     t.size = document.querySelector("#size").value;
+
+    t.dimension = {x :document.querySelector("#radius").value, y : document.querySelector("#radius").value};
     t.armorClass = document.querySelector("#armorClass").value;
     t.hitPoints = {
         dieAmount :  document.querySelector("#hpamount").value,
@@ -43,65 +52,24 @@ function sendData()
     t.pools = {};
     for(let i = 0; i < poolsAmount; i++)
     {
-        let n = document.querySelector(`#pname${i}`);
-        if(n != null)
+        let name = document.querySelector(`#pname${i}`); let points = document.querySelector(`#ppoints${i}`);
+        if(name != null && name.value != "" && points !== null)
         {
-            n =document.querySelector(`#pname${i}`).value;
-            if(n != "")
-            {
-                t.pools[n] = Number.parseInt(document.querySelector(`#ppoints${i}`).value);
-            }
+            t.pools[name.value] = Number.parseInt(points.value);
         }
     }
-    t.actions = [];
-    for(let i = 0; i < actionsAmount ; i++)
-    {
-        let a = {name: "Club", damage: "1d6", damageAbility : "Strength", damageExtra : 0, damageType : "Bludgeoning", toHit : "Strength", toHitExtra : 0, saveSkill: "None", saveDC : 0, target : "Enemy", uses : -1, onSuccess : false, reach:150, areaEffect : 1};
-        let cond = { name :"None", duration: -1, damage : "0", save : "None", saveDC : 0, resistances : "", vulnerabilities : "", immunities:"" }
-        for(let key in a)
-        {
-            if(document.querySelector(`#${key}${i}`) !== null )
-            {
-                a[key] = document.querySelector(`#${key}${i}`).value
-                if(key == "reach")
-                {
-                    a[key] = Number.parseFloat(a[key]) * 100;
-                }
-                if(key == "onSuccess")
-                    a[key] = document.querySelector(`#${key}${i}`).checked
-            }
 
-        }
-        // Action uses pool
-        if(document.querySelector(`#pool${i}`) !== null  && document.querySelector(`#pool${i}`).value != "")
+    t.actions = [];
+    for(let i = 0; i < actions.length; i++)
+    {
+        let a = clone(actions[i]);
+        if(conditions[i] && conditions[i] !== {})
         {
-            a["pool"] = document.querySelector(`#pool${i}`).value;
+            a.condition = conditions[i];
+            addActionOrConditionToLocal("condition", conditions[i])
         }
-        //IF ACTION HAS CONDITION
-        if(document.querySelector(`#cname${i}`) !== null && document.querySelector(`#cname${i}`).value != "" )
-        {
-            for(let key in cond)
-            {
-                if(document.querySelector(`#c${key}${i}`) !== null && document.querySelector(`#c${key}${i}`).value !== "")
-                {
-                    cond[key] = document.querySelector(`#c${key}${i}`).value;
-                }
-            }
-            if(document.querySelector(`#cadditional${i}`) !== null && document.querySelector(`#cadditional${i}`).value !== "")
-            {
-                cond.additional = document.querySelector(`#cadditional${i}`).value;
-                let a = document.querySelector(`#cadditionalValue${i}`).value;
-                
-                if(a == "true")
-                    a = true;
-                
-                cond[cond.additional] = a
-            }
-            a.condition = cond;
-        }
-        if(document.querySelector(`#name${i}`) !== null )
-            t.actions.push(a);
-        //delete
+        t.actions.push(a);
+        addActionOrConditionToLocal("action", a)
     }
 
     t.conditions = [];
@@ -124,60 +92,104 @@ function sendData()
         if(document.querySelector(`#tname${i}`) !== null && document.querySelector(`#tname${i}`).value !== "")
         {
             t.conditions.push(cond);
+            addActionOrConditionToLocal("condition", cond)
         }
     }
-    
-    LocalData.addTroop(t.source, t);
-}
-function writeTroop(troop)
-{
-    let data = LocalData.getAllTroops();
-    actionsAmount = 0;
-    data.forEach(t => 
-    {
-        if(t.name == troop)
-        {
-            document.querySelector("#name").value = t.name;
-            document.querySelector("#type").value = t.type;
-            document.querySelector("#radius").value = t.radius;
-            document.querySelector("#size").value = t.size;
-            document.querySelector("#armorClass").value = t.armorClass;
-            document.querySelector("#hpamount").value = t.hitPoints.dieAmount,
-            document.querySelector("#hptype").value = t.hitPoints.dieType,
-            document.querySelector("#hpBonus").value = t.hitPoints.bonus;
 
-            for(let score in t.abilityScores)
-            {
-                document.querySelector(`#${score}Score`).value = t.abilityScores[score].score;
-                document.querySelector(`#${score}Bonus`).value = t.abilityScores[score].bonus;
-            }
-            document.querySelector("#speed").value = floor(t.speed / 100); 
-            document.querySelector("#actionsPerTurn").value = t.actionsPerTurn;        
-            document.querySelector("#turnsAmount").value = t.turnsAmount;                     
+    // Actual storage of the Troop
+    let data = LocalData.getLocalStorage()
+    if(data[t.source] == undefined)
+    {
+        LocalData.createSource(t.source);
+        data = LocalData.getLocalStorage();
+    }
+    LocalData.add(t.source, "troops", t);
+}
+// Verifies whether we have the data in localStorage, and adds it to the right place.
+function addActionOrConditionToLocal(actionOrCondition, data)
+{
+    if(actionOrCondition == "action")
+    {
+        let actData = LocalData.get("actions", "All");
+        let flag = false;
+        actData.forEach(act => {if(act.name == data.name){flag = true;}})
+        if(!flag)
+            LocalData.add(t.source, "actions", data);
+    }
+    else if(actionOrCondition == "condition")
+    {
+        let condData = LocalData.get("conditions", "All");
+        let flag = false;
+        condData.forEach(cond => {if(!data.name || data.name == cond.name){flag = true;}})
+        if(!flag)
+            LocalData.add(t.source, "conditions", data);
+    }
     
-            if(t.pools)
-            {
-                let i = 0;
-                for(let p in t.pools)
-                {
-                    addPool({name : p, points : t.pools[p]})
-                    i++;
-                }
-                poolsAmount = i;
-            }
-            if(t.actions)
-            {
-                t.actions.forEach(a => {addAction(a);});
-                actionsAmount = t.actions.length;
-            }
-            if(t.conditions)
-            {
-                t.conditions.forEach(t => addTrait(t));
-                traitsAmount= t.conditions.length;
-            }
-            return t;
+}
+
+// Write the data for the Troop at given localStorage Index.
+function writeTroop(troopIndex)
+{
+    actionsAmount = 0;
+    let troopData = LocalData.get("troops", "All");
+    let t = troopData[troopIndex];
+    document.querySelector("#name").value = t.name;
+    document.querySelector("#type").value = t.type;
+
+    if(t.radius)
+        document.querySelector("#radius").value = t.radius;
+    if(t.dimension)
+        document.querySelector("#radius").value = t.dimension.x;
+    document.querySelector("#size").value = t.size;
+    document.querySelector("#armorClass").value = t.armorClass;
+    document.querySelector("#hpamount").value = t.hitPoints.dieAmount,
+    document.querySelector("#hptype").value = t.hitPoints.dieType,
+    document.querySelector("#hpBonus").value = t.hitPoints.bonus;
+
+    for(let score in t.abilityScores)
+    {
+        document.querySelector(`#${score}Score`).value = t.abilityScores[score].score;
+        document.querySelector(`#${score}Bonus`).value = t.abilityScores[score].bonus;
+    }
+    document.querySelector("#speed").value = floor(t.speed / 100); 
+    document.querySelector("#actionsPerTurn").value = t.actionsPerTurn;        
+    document.querySelector("#turnsAmount").value = t.turnsAmount;                     
+
+    if(t.pools)
+    {
+        let i = 0;
+        for(let p in t.pools)
+        {
+            addPool({name : p, points : t.pools[p]})
+            i++;
         }
-    })
+        poolsAmount = i;
+    }
+    if(t.actions)
+    {
+        t.actions.forEach(a => {a.timestamp = undefined;});
+        let conds = [];
+        for(let i = 0; i < t.actions.length; i++)
+        {
+            if(t.actions[i].condition)
+            {
+                t.actions[i].condition.timestamp = undefined;
+
+                conds[i] =  clone(t.actions[i].condition);
+                t.actions[i].condition = undefined;
+            }
+        }
+        actions = t.actions;
+        conditions = conds;
+        actionsAmount = t.actions.length;
+        rewriteActionsHTML()
+    }
+    if(t.conditions)
+    {
+        t.conditions.forEach(t => addTrait(t));
+        traitsAmount= t.conditions.length;
+    }
+    return t;
 }
 
 function writeAbilityScore()
@@ -206,75 +218,282 @@ function writeAbilityScore()
         }
     }
 }
+
+// Rewrites the whole <div> that holds the list of actions
+function rewriteActionsHTML()
+{
+    let elt = `<div id="actionsList">  <input type="submit" value="Add Action" onclick="addNewAction()" />`
+    for(let act = 0; act < actions.length; act ++)
+    {
+        let action = actions[act];
+
+        let hidden = false;
+        let htmlElt = document.querySelector(`#action${act}`) 
+        if(htmlElt != null && htmlElt.style.display == "none" ){ hidden =true; }
+
+        elt += `<div class="holder">
+            <h4 style="cursor:pointer;" onclick="toggleHolder(${act})"> ${action.name} </h4> 
+            ${getActionOrConditionSelect('action', act)} 
+            <input type="submit" value="Delete" onclick="deleteAction(${act})"/> 
+            ${getActionHTML(act, hidden)} </div>`;
+        elt += `<br />`
+    }
+    elt += `</div>`
+    document.querySelector("#actionsHolder").innerHTML = elt;
+}
+
+// Toggles the visibility on an Action's attribute tweaking
+function toggleHolder(actionIndex)
+{
+    let elt = document.querySelector(`#action${actionIndex}`);
+    if(elt.style.display !== "none"){ elt.style.display = "none" }
+    else{ elt.style.display = "grid" }
+}
+
+// Adds a new action to the list
 function addNewAction()
 {
-    let a = {name:"Club", damage: "1d6", damageAbility : "Strength", damageExtra : 0, damageType : "Bludgeoning", toHit : "Strength", toHitExtra : 0, saveSkill: "None", saveDC : 0, target : "Enemy", uses : -1, onSuccess : false, reach:150, areaEffect : 1};
-    let cond = { name :"", additional : "", duration: -1 , damage : "0", save : "None", saveDC : 0, resistances : "", vulnerabilities : "" }
-
-    a.condition = cond;
-    addAction(a);
+    actions.push({"name": "Action", "uses" : -1, "target" : "Self", "reach" : 10, "areaEffect" : 1});
+    conditions.push({})
+    rewriteActionsHTML();
 }
-function addAction(values)
+
+// Deletes an action and its associated condition
+function deleteAction(actionIndex)
 {
-    let row = document.createElement("tr");
-    row.id = `actionRow${actionsAmount}`;
-    row.style = "border:1px solid rgb(250,180,60);"
-    let skipt =``, succ = ``;
-    let conditionHTML = `<th></th>`;
-    if(values.condition)
+    actions.splice(actionIndex, 1);
+    conditions.splice(actionIndex, 1);
+    rewriteActionsHTML();
+}
+
+// Returns the whole HTML <div> that holds an Action element (Form that allows to add and modify attributes of the action).
+function getActionHTML(actionIndex, hidden)
+{
+    let action = actions[actionIndex];
+    let condition = conditions[actionIndex];
+    let a = clone(action);
+    a.condition = condition;
+    a = new Action(a);
+
+    let h = ``
+    if(hidden)
+        h = `style="display:none;"`
+
+    let elt = `<div class="attributesHolder" id="action${actionIndex}" ${h} >`
+        elt += `<p class="explanation"> ACTION DESCRIPTION -  ${a.describe(true)}</p>`
+    for(let key in action)
     {
-        let add = values.condition[values.condition.additional]
-        if(!add)
+        if(action[key] !== undefined)
         {
-            add = "";
+            elt += getAttributeSelect('action', key, actionIndex)
+            elt += `<input type="text" value="${actions[actionIndex][key]}" id="value_${key}" onchange="changeAttributeValue('action', '${key}', ${actionIndex}, this.value)" />`
+            elt += `<input type="submit" value="Delete" id="delete_${key}" onclick="deleteAttribute('action', '${key}', ${actionIndex});" />`
         }
-        conditionHTML =  `<th>
-                <input id="cname${actionsAmount}" type="text"  placeholder="Condition Name" value="${values.condition.name}" />
-                <input id="cduration${actionsAmount}" type="number" value="${values.condition.duration}" />
-                <input id="cdamage${actionsAmount}" placeholder="Damage Roll" type="text" value="${values.condition.damage}"/>
-                <select id="csave${actionsAmount}" > ${writeAbilityScoreSelect(values.condition.save)}<br/>
-                <input id="csaveDC${actionsAmount}" type="number" value="${values.condition.saveDC}"/> 
+    }
+    elt += `<p class="fullRow"> </p>`
+    elt+= `<input type="submit" value="Add Attribute" onclick="addAttribute('action', ${actionIndex})" />`
+    elt += `<p class="fullRow"> </p>`
 
-                <input id="cresistances${actionsAmount}" placeholder="Resistance, Resistance" type="text" value="${values.condition.resistances}" />
-                <input id="cvulnerabilities${actionsAmount}" placeholder="Vulnerability, Vulnerability" type="text"  value="${values.condition.vulnerabilities}" />
-                <input id="cimmunities${actionsAmount}" placeholder="Immunity, Immunity" type="text"  value="${values.condition.vulnerabilities}" />
+    elt += `<div class="attributesHolder" id"condition" > <h4> Condition </h4> ${getActionOrConditionSelect('condition', actionIndex)}  <input type="submit" value="Local Save" onclick="saveAction('condition', ${actionIndex})" />`;
+        elt += `<p class="explanation"> CONDITION DESCRIPTION -  ${a.describeCondition()} </p>`
+    for(let key in condition)
+    {
+        if(condition[key] !== undefined)
+        {
+            elt += getAttributeSelect('condition', key, actionIndex)
+            elt += `<input type="text" value="${condition[key]}" id="value_${key}"  onchange="changeAttributeValue('condition', '${key}', ${actionIndex}, this.value)" />`
+            elt += `<input type="submit" value="Delete" id="delete_${key}" onclick="deleteAttribute('condition', '${key}', ${actionIndex});" />`
+        }
+    }
+    elt+= `<input type="submit" value="Add Condition Attribute" onclick="addAttribute('condition', ${actionIndex})" />`
+    elt += `</div>`;
+    elt += `</div>`;
+    return elt;
+}
 
-                <input id="cadditional${actionsAmount}" placeholder="Additional Key" type="text" value="${values.condition.additional}" />
-                <input id="cadditionalValue${actionsAmount}" placeholder="Additional Value" type="text" value="${add}" /> 
-            </th>`
+// Returns a <select> element's HTML containing the list of all Actions/Conditions within localStorage
+function getActionOrConditionSelect(actionOrCondition, actionIndex)
+{
+    let elt = `<select onchange="reloadAction('${actionOrCondition}', this.value, ${actionIndex})"> <option value="undefined"> --- </option>`
+    if(actionOrCondition == "action")
+    {
+        let data = LocalData.get("actions", "All");
+        for(let i = 0; i < data.length; i++)
+        {
+            let act = data[i];
+
+            if(selectedActions[actionIndex] && selectedActions[actionIndex] == i)
+                elt += `<option value="${i}" selected="selected"> ${act.name} </option>`;
+            else
+                elt += `<option value="${i}"> ${act.name} </option>`;
+        }
+    }
+    else if(actionOrCondition =="condition")
+    {
+        let data = LocalData.get("conditions", "All");
+        for(let i = 0; i < data.length; i++)
+        {
+            let cond = data[i];
+
+            if(selectedConditions[actionIndex] && selectedConditions[actionIndex] == i)
+                elt += `<option value="${i}" selected="selected"> ${cond.name} </option>`;
+            else
+                elt += `<option value="${i}"> ${cond.name} </option>`;
+        }
+    }
+    elt += `</select>`;
+    return elt;
+}
+
+// Resets the Action at actionIndex. Its values are set to ones of the localStorage action at ID
+function reloadAction(actionOrCondition, id, actionIndex)
+{
+    if(id)
+    {
+        if(actionOrCondition == "action")
+        {                        
+            let data = LocalData.get("actions", "All");
+            actions[actionIndex] = data[id];
+            if(data[id].condition){
+                conditions[actionIndex] = data[id].condition;
+            }
+            selectedActions[actionIndex] = id;
+        }
+        else if(actionOrCondition =="condition")
+        {
+            let data = LocalData.get("conditions", "All");
+            conditions[actionIndex] = data[id];
+            selectedConditions[actionIndex] = id;
+        }
+        rewriteActionsHTML(); 
+    }
+}
+
+// Adds a new attribute to an action or a condition ( following the global actionKeys and conditionKeys arrays, minus the ones already defined )
+function addAttribute(actionOrCondition, actionIndex)
+{
+    if(actionOrCondition == "action")
+    {
+        let firstKey = "name";
+        for(let i = 0; i < actionKeys.length; i++)
+        {
+            let k = actionKeys[i];
+            if(actions[actionIndex][ k ] == undefined )
+            {
+                firstKey = k;
+                break;
+            }
+        }
+        actions[actionIndex][firstKey] = "";
+    }
+    else if(actionOrCondition =="condition")
+    {
+        let firstKey = "name";
+        for(let i = 0; i < conditionKeys.length; i++)
+        {
+            let k = conditionKeys[i];
+            if(conditions[actionIndex][ k ] == undefined )
+            {
+                firstKey = k;
+                break;
+            }
+        }
+        conditions[actionIndex][firstKey] = "";
+    }
+    rewriteActionsHTML();
+}
+
+// Switches the value of an attribute within an Action/Condition to the new value
+function changeAttributeValue(actionOrCondition, key, actionIndex, value)
+{
+    if(actionOrCondition == "action")
+    {
+        actions[actionIndex][key] = value;
+    }
+    else if(actionOrCondition =="condition")
+    {
+        conditions[actionIndex][key] = value;
+    }
+    rewriteActionsHTML();
+}
+
+// Deletes the value from the Actions/Condition 
+function deleteAttribute(actionOrCondition, key, actionIndex)
+{
+    if(actionOrCondition == "action")
+    {
+        actions[actionIndex][key] = undefined;
+    }
+    else if(actionOrCondition =="condition")
+    {
+        conditions[actionIndex][key] = undefined;
+    }
+    rewriteActionsHTML();
+}
+
+// Switches one attribute to another when we change value on the <select>
+function switchAttribute(actionOrCondition, from, to, actionIndex)
+{
+    if(actionOrCondition == 'action')
+    {
+        actions[actionIndex][from] = undefined;
+        actions[actionIndex][to] = "";
+    }
+    else if (actionOrCondition == 'condition')
+    {
+        conditions[actionIndex][from] = undefined;
+        conditions[actionIndex][to] = "";
+    }
+    rewriteActionsHTML();
+}
+
+// Returns a <select> element with the possible attributes to be selected for the Action/Condition
+function getAttributeSelect(actionOrCondition, value, actionIndex)
+{
+    let obj;
+    let checkList;
+    let id = "";
+    if(actionOrCondition == 'action')
+    {
+        if(!value)
+            id = actionKeys[actions[actionIndex].length];
+        else
+            id = value;
+
+        obj = actionKeys;
+        checkList = actions[actionIndex];
+    }
+    else if(actionOrCondition == 'condition')
+    {
+        if(!value)
+            id = conditionKeys[conditions[actionIndex].length];
+        else
+            id = value;
+
+        obj = conditionKeys;
+        checkList = conditions[actionIndex];
     }
 
-    if(!values.pool)
-        values.pool = "";
-    if(values.onSuccess)
-        succ = `checked`;
-    row.innerHTML = `
-    <th><input type="submit" onclick="removeAction(${actionsAmount})"  value="Delete"/></th>
-    <th> <input type="text" id="name${actionsAmount}" value="${values.name}"> </th>
-    <th> <input type="text" id="damage${actionsAmount}" value="${values.damage}"/> 
-        <br/><select id="damageAbility${actionsAmount}" >${writeAbilityScoreSelect(values.damageAbility)} 
-        <br/><input type="number" id="damageExtra${actionsAmount}" value="${values.damageExtra}"/>
-        <br/><input type="text" id="damageType${actionsAmount}" value="${values.damageType}"/></th>
-    <th><select id="toHit${actionsAmount}" >${writeAbilityScoreSelect(values.toHit)} 
-        <br/><input type="number" id="toHitExtra${actionsAmount}" value="${values.toHitExtra}"/></th>
-    <th><select id="saveSkill${actionsAmount}">${writeAbilityScoreSelect(values.saveSkill)}
-        <br/><input type="number" id="saveDC${actionsAmount}" value="${values.saveDC}"/></th>
-    <th> <select id="target${actionsAmount}" ><option value="${values.target}" > ${values.target}</option><option value="Enemy">Enemy</option><option value="Ally">Ally</option><option value="Point">Point</option><option value="Self">Self</option></select>
-        <br/><input type="number" id="reach${actionsAmount}" value="${values.reach / 100}" />
-        <br/><input type="number" id="areaEffect${actionsAmount}" value="${values.areaEffect}" /></th>
-    <th> <input type="number" id="uses${actionsAmount}" value=${values.uses} /> 
-        <input type="checkbox" id="onSuccess${actionsAmount}" ${succ}/>
-        <input type="text" id="pool${actionsAmount}" value="${values.pool}" /> </th>    
-    ${conditionHTML}    `;
+    let elt = `<select id="${id}" onchange="switchAttribute('${actionOrCondition}', '${id}', this.value, ${actionIndex})">`
+    obj.forEach(key =>
+    {
+        let s = ``;
+        if(value && key == value)
+            s = `selected="selected"`;
+        
+        let opt = `<option value="${key}" ${s}> ${key} </option> `;
 
-    document.querySelector("#actionsTable").childNodes[1].append(row);
-    actionsAmount ++;
-}  
-function removeAction(id)
-{                
-    let elt = document.querySelector(`#actionRow${id}`);
-    let table =document.querySelector("#actionsTable").childNodes[1];
-    table.removeChild(elt);
+        let writeFlag = true;
+        for(let haveKey in checkList)
+        {
+            if(key == haveKey && haveKey != value)
+                writeFlag = false
+        }
+        if(writeFlag)
+            elt += opt;
+    });
+
+    return elt;
 }
 
 function addNewTrait()
@@ -282,6 +501,7 @@ function addNewTrait()
     let cond = { name :"Regenerate", additional : "", damage : "-10d1", resistances : "", vulnerabilities : "", immunities : "" }
     addTrait(cond);
 }
+
 function addTrait(trait)
 {
     let row = document.createElement("tr");
@@ -300,6 +520,7 @@ function addTrait(trait)
     document.querySelector("#traitsTable").childNodes[1].append(row);
     traitsAmount++;
 }
+
 function removeTrait(id)
 {                
     let elt = document.querySelector(`#traitRow${id}`);
@@ -312,6 +533,7 @@ function addNewPool()
     let p = {name:"Spell Slots 1", points:"2"};
     addPool(p);
 }
+
 function addPool(pool)
 {
     let row = document.createElement("tr");
@@ -324,6 +546,7 @@ function addPool(pool)
     document.querySelector("#poolsTable").childNodes[1].append(row);
     poolsAmount ++;
 }
+
 function removePool(id)
 {
     let elt = document.querySelector(`#poolsRow${id}`);
@@ -331,6 +554,7 @@ function removePool(id)
     table.removeChild(elt); 
 }
 
+// Switches back and forth between the Troop and Actions Panels on the HTML
 function toggleTroopTab(id)
 {
     let troop = document.querySelector("#troopCreation");
@@ -355,36 +579,52 @@ function toggleTroopTab(id)
     }
 }
 
-
-function writeEdit()
+// Returns a <select> element with each Troop of the localStorage.content.troops array
+function writeTroopSelect()
 {
+    let troopData = LocalData.get("troops", "All");
     let elt = document.querySelector("#edit");
-    let data = LocalData.getAllTroops();
-    data.forEach(troop =>
+    for(let i = 0; i < troopData.length; i++)
     {
+        let troop = troopData[i];
         let e = document.createElement("option");
-        e.value = troop.name;
+        e.value = i;
         e.innerHTML = troop.name;
         elt.append(e);
-    })
+    }
 }
-function writeConditionSelect(value)
-{
-    let elt;
-    if(value != "None")
-        elt = `<select id="conditions"> <option value="${value}"> ${value} </option> </select> `;
-    else
-        elt = `<select id="conditions"> <option value="None"> None </option> </select> `;
 
-    return elt;
-}
+// May be used for input on Actions.
 function writeAbilityScoreSelect(value)
 {
-    let elt;
-    if(value != "None")
-        elt = `<option value="${value}">${value}</option> <option value="None">None</option> <option value="Strength">Strength</option> <option value="Dexterity">Dexterity</option> <option value="Constitution">Constitution</option> <option value="Intelligence">Intelligence</option> <option value="Wisdom">Wisdom</option> <option value="Charisma">Charisma</option></select>`
-    else
-        elt = `<option value="None">None</option> <option value="Strength">Strength</option> <option value="Dexterity">Dexterity</option> <option value="Constitution">Constitution</option> <option value="Intelligence">Intelligence</option> <option value="Wisdom">Wisdom</option> <option value="Charisma">Charisma</option></select>`
+    let abilityScores = {"Strength" : "","Dexterity" : "","Constitution": "","Intelligence": "","Wisdom": "","Charisma": ""}
 
+    let elt;
+    if(value == "None")
+        elt = `<option value="None">None</option> <option value="Strength">Strength</option> <option value="Dexterity">Dexterity</option> <option value="Constitution">Constitution</option> <option value="Intelligence">Intelligence</option> <option value="Wisdom">Wisdom</option> <option value="Charisma">Charisma</option></select>`
+    else
+    {
+        elt = `<option value="None">None</option>`
+        for(let key in abilityScores)
+        {
+            elt += `<option value="${key}" `
+            if(key == value){ elt += `selected="selected" >`}
+            else {elt += `>`}
+            elt += `${key} </option>`
+        }
+    }
+    return elt;
+}
+
+function writeTargetSelect(value)
+{
+    let targets = ["Ally", "Enemy", "Self", "Point"];
+    let elt;
+    for(let i = 0; i<targets.length;i++)
+    {
+        elt += `<option value="${targets[i]}" `;
+        if(value == targets[i]){ elt += `selected="selected" > ${targets[i]} </option>`}
+        else { elt += `> ${targets[i]} </option>`}
+    }
     return elt;
 }

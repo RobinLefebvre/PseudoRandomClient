@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>PseudoRandom - Troop</title>
+    <title>PseudoRandom - Troop Editor </title>
 
     <!-- p5 
     <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
@@ -23,69 +23,63 @@
     <link rel="stylesheet" href="local dependencies/purecss.css"> 
     
     <link href="./style/main.css" rel="stylesheet" />
+    <link href="./style/editorTroop.css" rel="stylesheet" />
 </head>
 
 <body>
     <header>
-        <h4 class="headerItem" onclick="window.location.href = `./index.html`" >TRPG - Prototype</h4>
-        <p class="headerItem" onclick="window.location.href = `./editorEncounter.html`">Encounter Editor</p>
-        <p class="headerItem" onclick="window.location.href = `./editorTroop.html`">Troop Editor</p>
-        <p class="headerItem" onclick="window.location.href = `./game.html`">Game</p>
+        <h4 class="headerItem" onclick="window.location.href = `${SERVER}index.html`" >PseudoRandom</h4>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}editorEncounter.html`">Encounter Editor</p>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}editorTroop.html`">Troop Editor</p>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}game.html`">Game</p>
+        <p class="headerItem" onclick="window.location.href = `${SERVER}campaignStart.html`">Campaign</p>
     </header>
     <div id="page_content" >
         <div id="troopCreationMenu"> 
-            <input type="submit" value="Troop" id="troopTabToggle" onclick="toggleTroopTab(this.id)" style="width:100%; font-size:1rem; text-decoration: underline; background-color : rgba(0,0,0,0); border:none; outline:none;" /> <br/>
-            <input type="submit" value="Actions" id="actionsTabToggle" onclick="toggleTroopTab(this.id)" style="width:100%; font-size:1rem;  background-color : rgba(0,0,0,0); border:none; outline:none;" /> <br/>
+            <input type="submit" value="Troop Tab" id="troopTabToggle" onclick="toggleTroopTab(this.id)" style="text-decoration: underline;" /> <br/>
+            <input type="submit" value="Actions Tab" id="actionsTabToggle" onclick="toggleTroopTab(this.id)"/> <br/>
             
-            <input value="Save Troop" type="submit" onclick="sendData();" style="font-size:1.1rem; background-color : rgba(0,0,0,0.75); border:none; outline:none; margin-top:2rem; border-radius:0.5rem;"  />
+            <input value="Save Troop" type="submit" onclick="sendData();" style="background-color: rgb(250,180,60); margin-top:2rem; color:rgb(50,50,50)"  />
         </div>
         <div id="troopCreation">
-            <!-- ROW 1 -->
             <p id="explanations" style="grid-column: 1/-1; padding-left:2rem;"><b style="font-size:1.3rem; text-decoration: underline;">Troop Creation</b></p> 
 
-                <!-- ROW 2 -->
             <p> Clone existing Troop </p><select id="edit" onchange="writeTroop(this.value)"> <option value="none">None</option></select>
-            <p style="grid-column: 3/-1;"> <br/> </p>
+            <p style="grid-column: 3/-1;"> <br/> </p><!-- Empty -->
 
-            <!-- ROW 3 -->
             <p> Name : </p> <input type="text" id="name" placeHolder="Troop Name..." />
             <p> Source : </p> <input type="text" id="source" value="Default" /> 
 
-            <!-- ROW 4 -->
             <p style="grid-row : 4/5; grid-column:1/-1; padding-left:3rem;">  <br/> <b style="font-size:1.2rem;;"> Fluff Data : </b></p>
 
-            <!-- ROW 5 -->
             <p> Map Size (centimeter radius)  : </p> <input type="number" id="radius" value="50"/> 
-            <p> Fluff Size : </p> <select id="size"><option value="Medium">Medium </option><option value="Tiny">Tiny </option><option value="Small">Small </option><option value="Medium">Medium </option><option value="Large">Large </option><option value="Huge">Huge </option><option value="Gargantuan">Gargantuan </option></select> 
+            <p> Fluff Size : </p> <select id="size"><option value="Tiny">Tiny </option><option value="Small">Small </option><option value="Medium">Medium </option><option value="Large">Large </option><option value="Huge">Huge </option><option value="Gargantuan">Gargantuan </option></select> 
             
-            <!-- ROW 6 -->
             <p> Troop Type : </p> <input type="text" id="type" value="humanoïd"/> 
-            <textarea style="grid-column:3/-1; grid-row:6/8;" rows="4" cols="50" id="description"> You can enter your troop's visual and gameplay description here. </textarea>
+            <p style="grid-column:3/-1; grid-row:6/8;"> </p><!-- Empty -->
 
-            <!-- ROW 7 -->
-            <p style="grid-row : 7/8; grid-column:1/-1;"></p>
-            <!-- ROW 8 -->
+            <p style="grid-row : 7/8; grid-column:1/-1;"></p> <!-- Empty -->
             <p style="grid-row : 8/9; grid-column:1/-1; padding-left:3rem;"><b style="font-size:1.2rem;"> Game Data : </b> <br/></p>
 
-            <!-- ROW 9-->
             <p> Hit Points : </p> <p style="margin:0; padding-top:0.5rem; padding-left:0;"> <input type="number" style="width:20%;margin:0;" id="hpamount" value="1"/> d <select id="hptype" style="width:20%;margin:0;"><option value="6"> 6 </option><option value="1"> 1 </option><option value="4"> 4 </option><option value="6"> 6 </option><option value="8"> 8 </option><option value="10"> 10 </option><option value="12"> 12 </option></select> + <input style="width:20%;margin:0;" id="hpBonus" type="number" value="0" /> </p>
-            <p style="grid-row : 9/10; grid-column:3/-1;"></p>
+            <p style="grid-row : 9/10; grid-column:3/-1;"></p><!-- Empty -->
 
-            <!-- ROW 10-->
             <p> Armor Class : </p> <input type="number" id="armorClass" value="10" />  
-            <p> Movement Speed : </p> <input type="number" id="speed" value="9" />
+            <p> Movement Speed (m. / turn): </p> <input type="number" id="speed" value="9" />
             
-            <!-- ROW 11 -->
+            <!-- Empty -->
             <p style="grid-row : 11/12; grid-column:1/-1;"> </p>
 
-            <!-- ROW 11 -->
             <p> Actions Per Turn : </p> <input  id="actionsPerTurn" type="number" value="1"/>
             <p> Turns Per Round : </p> <input  id="turnsAmount" type="number" value="1"/>
 
-            <!-- ROW 12 -->
-            <p style="grid-row : 13/14; grid-column:1/-1;"></p>
+            <!-- Empty -->
+            <p style="grid-column:1/-1;"></p>
+            <p style="grid-column:1/-1;"></p>
+            <p style="grid-column:1/-1;"></p>
+            <p style="grid-column:1/-1;"></p>
+            <p style="grid-column:1/-1;"></p>
 
-            <!-- ROW 13 -->
             <table style=" border-bottom : 1px solid rgb(250,180,60); margin-bottom : 2rem;">
                 <tr style="height: 4rem; border-top:1px solid rgb(250,180,60);">
                     <th><b>Ability</b></th>
@@ -121,40 +115,38 @@
             <h3> Pools of Actions</h3>
             <table id="poolsTable">
                 <tr style="border : 1px solid rgb(250,180,60);">
-                    <th ><input type="submit" style="font-size:1.2rem; margin-bottom : 0;width:100%; border:none; background-color:rgba(0,0,0,0.5);" id="newAction" value="Add Pool" style="width:100%; margin:0;" onclick="addNewPool()"/></th>
+                    <th ><input type="submit" class="tableButton" id="newAction" value="Add Pool" style="width:100%; margin:0;" onclick="addNewPool()"/></th>
                     <th>Name</th>
                     <th>Points</th>
                 </tr>
             </table>
-            <h3> Actions </h3>
-            <table id="actionsTable">
-                <tr style="border : 1px solid rgb(250,180,60);">
-                    <th ><input type="submit" style="font-size:1.2rem; margin-bottom : 0;width:100%; border:none; background-color:rgba(0,0,0,0.5);" id="newAction" value="Add Action" style="width:100%; margin:0;" onclick="addNewAction()"/></th>
-                    <th>Name</th>
-                    <th>Damage</th>
-                    <th>To Hit</th>
-                    <th>Saving Throw</th>
-                    <th>Target</th>
-                    <th>Uses </th>
-                    <th>Condition</th>
-                </tr>
-            </table>
+            
             <h3>Traits </h3>
+            <div id="traitsHolder">
+
+            </div>
             <table id="traitsTable">
                 <tr style="border : 1px solid rgb(250,180,60);">
-                    <th ><input type="submit" style="font-size:1.2rem; margin-bottom : 0;width:100%; border:none; background-color:rgba(0,0,0,0.5);" id="newAction" value="Add Trait" style="width:100%; margin:0;" onclick="addNewTrait()"/></th>
+                    <th ><input type="submit" class="tableButton" id="newAction" value="Add Trait" style="width:100%; margin:0;" onclick="addNewTrait()"/></th>
                     <th>Name</th>
                     <th>Damage</th>
                     <th>Resist' / Vuln' / Imm' </th>
                     <th>Additional</th>
                 </tr>
             </table>
+            <h3> Actions </h3>
+            <div id="actionsHolder">
+
+            </div>
+            
         </div>
     </div>
     
     <div id="scripts">
+        <script src="scripts/Troop.js"></script>
         <script src="scripts/util.js"></script>
         <script src="scripts/DOM/editorTroopDOM.js"></script>
+
     </div>
 </body>
     

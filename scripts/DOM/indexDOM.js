@@ -3,96 +3,102 @@ function setup()
     writeContentList()
 }
 /** We grab the local Storage and loop through the contents.
-    *   - Ugly, right ? I guess just writing html tags inside `` would work better. 
-    *   - I mean, what's the style even doing here ?
-    *   - That's it ? Just the one huge-ass function ? Jee bro.
-    */
+*   - Ugly, right ? I guess just writing html tags inside `` would work better. 
+*   - I mean, what's the style even doing here ?
+*   - That's it ? Just the one huge-ass function ? Jee bro.
+*/
 function writeContentList()
 {
     let localData = LocalData.getLocalStorage();
     let holder = document.querySelector(".sources");
     holder.innerHTML = "";
 
-    // FOR EACH SOURCE
+    // FOR EACH SOURCE (localStorage.content[SOURCE])
     for (let source in localData)
     {
         // Make sure the source name is a valid HTML ID;
         let id = source.replace(/[^A-Za-z0-9]+/g, "")
         
         let sourceHolder =  document.createElement("div");
-        sourceHolder.style = "background-color:rgba(0,0,0,0.5); color:rgb(200,200,200); margin: 1rem; padding:1rem; font-size: 1.5rem; font-weight : bold; border-bottom:1px solid rgb(250, 180, 60); "
+        sourceHolder.className = "sourceHolder";
 
         let sourceDelete = document.createElement("button");
         sourceDelete.innerHTML = "Delete";
-        sourceDelete.className = `${source}`; 
-        sourceDelete.style = "background-color:rgb(50,50,50); font-size : 1.1rem; border-radius:0.2rem; padding-bottom:0.5rem; padding-top:0.4rem; width: 5rem; cursor:pointer; border:none; height : 100%;";
-        sourceDelete.addEventListener('click', (event) => {LocalData.deleteSource(event.target.className);writeContentList();})
+        sourceDelete.id = `${source}`; 
+        sourceDelete.className = "deleteSourceButton"
+        sourceDelete.addEventListener('click', (event) => {LocalData.deleteSource(event.target.id); writeContentList();})
         sourceHolder.append(sourceDelete);
 
         let sourceActive = document.createElement("input");
         sourceActive.type = "checkbox";
         sourceActive.checked = localData[source].isActive;
-        sourceActive.className = `${source}`;
-        sourceActive.style = "background-color : rgb(200,200,200);  width:1rem; font-size : 1rem; margin-left : 5rem;";
-        sourceActive.addEventListener('change', (event) => { LocalData.toggleSourceActive(event.target.className, event.target.checked)})
+        sourceActive.id = `${source}`;
+        sourceActive.className = "activityCheckbox"
+        sourceActive.addEventListener('change', (event) => { LocalData.toggleSourceActive(event.target.id, event.target.checked)})
         sourceHolder.append(sourceActive);
 
         let sourceName = document.createElement("p");
         sourceName.innerHTML = source;
-        sourceName.style = "cursor: pointer; height: 100%; display : inline; margin-left: 5rem;"
+        sourceName.className = "sourceName";
         sourceName.addEventListener('click', (event) => 
         {
             let target = document.querySelector(`#${id}Holder`);
-            if(target.style.display == "none")
-            {
-                target.style.display = "";
-            }
-            else
-            {
-                target.style.display = "none";
-            }
+            if(target.style.display == "grid"){ target.style.display = "none"; }
+            else{ target.style.display = "grid"; }
         })
         sourceHolder.append(sourceName);
 
         holder.append(sourceHolder);
 
-        // FOR EACH KEY IN THE SOURCE (TROOPS, ITEMS, ...)
+        // FOR EACH KEY IN THE SOURCE (localStorage.content[SOURCE][KEY])
         let sourceContent = document.createElement("div");
         sourceContent.id = `${id}Holder`;
-        sourceContent.style = "background-color:rgba(0,0,0,0.5); margin: 1rem; margin-top:-1rem; padding:1rem; color:rgb(200,200,200); border-bottom : 1px solid rgb(250, 180, 60);";
-        sourceContent.style.display = "none";
+        sourceContent.className = "contentHolder";
         for(let key in localData[source])
         {
-            if(key !== "isActive")
+            if(key !== "isActive" && localData[source][key].length > 0)
             {
                 let keyName = document.createElement("div");
                 keyName.innerHTML = `${key.toUpperCase()} (${localData[source][key].length})`;
-                keyName.style = "cursor: pointer; padding : 0.6rem; padding-left: 2rem; "
+                keyName.className = "key";
                 keyName.addEventListener('click', (event) =>
                 {
-                    let target = document.querySelector(`#${source.replace(/\s+/, "")}${key}`);
-                    if(target.style.display == "none")
-                    {
-                        target.style.display = "";
-                    }
-                    else
-                    {
-                        target.style.display = "none";
-                    }
+                    let target = document.querySelector(`#${id}${key}`);
+                    if(target.style.display == "none"){ target.style.display = "grid"; }
+                    else{ target.style.display = "none"; }
                 });
                 sourceContent.append(keyName);
 
-                // FOR EACH ELEMENT
+                // FOR EACH ELEMENT 
                 let keyContent = document.createElement("div");
-                keyContent.id = `${source.replace(/\s+/, "")}${key}`;
+                keyContent.id = `${id}${key}`;
+                keyContent.style.display = "none"
                 let cpt = 0;
                 localData[source][key].forEach(element =>
                 {
+                    let elementHTML = ``;
+                    elementHTML += `<input type="submit" value="Delete" class="elementDeleteButton" onclick='deleteFromStorage("${source}", "${key}", ${cpt}); writeContentList();'/>`
+                    elementHTML += `<p> ${element.name} `
+                    if(element.timestamp)
+                    {
+                        let t = getTimeSince(element.timestamp)
+                        elementHTML += ` - Created ${t.value} ${t.realUnit} ago `
+                    }
+                    if(key == "actions")
+                    {
+                        elementHTML += "- <br/>" + new Action(element).describe() + "</p>";
+                    }
+                    else if(key == "conditions")
+                    {
+                        elementHTML += "- <br/>" + new Condition(element).describe() + "</p>";
+                    }
+                    else
+                    {
+                        elementHTML += "</p>";
+                    }
                     let elementName = document.createElement("div");
-                    elementName.innerHTML = 
-                        `<input type="submit" value="Delete" style="margin-right:2.5rem;" onclick='deleteFromStorage("${source}", "${key}", ${cpt}); writeContentList();' /> 
-                        ${element.name} `;
-                    elementName.style = "cursor: default; padding : 0.25rem; padding-left: 7rem;"
+                    elementName.className = "element";
+                    elementName.innerHTML = elementHTML;
 
                     keyContent.append(elementName);
                     cpt++;

@@ -1,22 +1,65 @@
+/**writeGroups writes the Group's Data into DOM.
+ * @param {String} holderID : the holder element's ID 
+ * @param {String} groupNames : an Array of the Group names => Should be Group data*/
+function writeGroups(holderID, groupNames)
+{
+    let elt = document.querySelector(`#${holderID}`);
+    elt.innerHTML = "";
+    for(let i = 0; i < groupsAmount; i++)
+    {
+        let name; 
+        if(groupNames && groupNames[i])
+        {
+            name = `${groupNames[i]}`;
+        }
+        else 
+        {
+            name = `Group ${i+1}`; 
+        }
+        let partyHolder = document.createElement("div");
+        partyHolder.id = `group${i}`;
+        partyHolder.style = `border-right :1px solid rgb(250, 180, 60);`
+        partyHolder.innerHTML += 
+            `<input type="text" id="name${i}" value="${name}">  
+            <input style="margin-left:1rem;" type="color" id="color${i}" value="#FFFFFF" onchange="changeGroupColor(${i}, this.value)" />
+            <input style="margin-left:1rem;" type="submit" value="Add Troop" onclick="addTroop(${i})" />
+            <input style="margin-left: 2rem; type="text" value="" />`
+        
+        let troopsHolder = document.createElement("div");
+        troopsHolder.id = `holder${i}`;
+        troopsHolder.style = `width : 95%; margin : auto; border-top : 1px solid rgb(250, 180, 60); border-right :1px solid rgb(250, 180, 60); `
+        partyHolder.append(troopsHolder);
 
-
-/**Functions dumped in a file.
- *  Used for DOM edition in encounterEditor.html */
-
- /**displayEdit displays all the possible Encounters available in localStorage into a HTML element.  */
- function displayEdit()
- {
-     let ret = `<option value=""> --- </option>`;
-     let d = LocalData.getAllEncounters();
- 
-     for(let i = 0; i < d.length; i++)
-     {
-         enc = d[i];
-         ret += `<option value="${i}" > ${enc.name} </option>`; 
-     }
-     
-     document.querySelector(`#edit`).innerHTML = ret;
- }
+        elt.append(partyHolder);
+        if(groups[i])
+        {
+            writeTroops(i);
+        }
+        elt.append(partyHolder);
+    }
+}
+function changeGroupColor(index, value)
+{
+    groups[index].color = value;
+}
+/**writeSavedMapsOption displays all the possible Encounters available in localStorage into a HTML element.  */
+function writeSavedMapsOption()
+{
+    let ret = `<option value=""> --- </option>`;
+    let d = LocalData.get("encounters", "All");
+    let d2 = LocalData.get("maps", "All");
+    for(let i = 0; i < d.length; i++)
+    {
+        let enc = d[i];
+        ret += `<option value="encounter${i}" > ${enc.name} </option>`; 
+    }
+    for(let i = 0; i < d2.length; i++)
+    {
+        let enc = d2[i];
+        ret += `<option value="map${i}" > ${enc.name} </option>`; 
+    }
+    document.querySelector(`#edit`).innerHTML = ret;
+}
  
   /**writeExplanation displays a message of explanation from onmouseover message
    * @param {String} value : the message to be displayed 
@@ -52,6 +95,10 @@
         case "gridDisplay" :
              write = "<b> Grid Display : </b><br/> Check the box to have the grid on the map. <br/> Number determines the size of each cell on the grid. <br/><br/> 'Murican tip : Setting this to 150 is equivalent to having a 5ft. grid. ";
              break;
+            
+        case "gridSnap" :
+            write = "<b> Grid Snap : </b><br/>Number determines a number at which to snap the mouse drag events. <br/>";
+            break; 
 
         // AREAS TAB
         case "editArea":
@@ -101,43 +148,6 @@
      elt.innerHTML = write;
  }
  
-  /**writeGroups displays a message of explanation from onmouseover message
-   * @param {String} holderID : the holder element's ID */
- function writeGroups(holderID, groupNames)
- {
-     let elt = document.querySelector(`#${holderID}`);
-     elt.innerHTML = "";
-     for(let i = 0; i < groupsAmount; i++)
-     {
-        let name; 
-        if(groupNames && groupNames[i])
-         {
-            name = `${groupNames[i]}`;
-         }
-         else 
-            name = `Group ${i+1}`; 
-         let partyHolder = document.createElement("div");
-         partyHolder.id = `group${i}`;
-         partyHolder.style = `border-right :1px solid rgb(250, 180, 60);`
-         partyHolder.innerHTML += 
-             `<input type="text" id="name${i}" value="${name}">  
-             <input style="margin-left:1rem;" type="color" id="color${i}" value="#FFFFFF" />
-             <input style="margin-left:1rem;" type="submit" value="Add Troop" onclick="addTroop(${i})" />
-             <input style="margin-left: 2rem; type="text" value="" />`
-         
-         let troopsHolder = document.createElement("div");
-         troopsHolder.id = `holder${i}`;
-         troopsHolder.style = `width : 95%; margin : auto; border-top : 1px solid rgb(250, 180, 60); border-right :1px solid rgb(250, 180, 60); `
-         partyHolder.append(troopsHolder);
- 
-         elt.append(partyHolder);
-         if(groups[i])
-         {
-             writeTroops(i);
-         }
-         elt.append(partyHolder);
-     }
- }
  
  /** Write troops div from the group
   * @param {*} group : the group's key in the troops object*/
@@ -157,11 +167,11 @@
              troopSelect.id = `troop${group}_${ind}`;
              let troopOption = `<option value="${t.name}"> ${t.name} </option>`;
 
-             LocalData.getAllTroops().forEach(troop => 
+             let troopsStorage = LocalData.get("troops", "All")
+             if(troopsStorage.length > 0)
              {
-                 if(troop.name != t.name)
-                    troopOption += `<option value="${troop.name}"> ${troop.name} </option>`;
-             });
+                troopsStorage.forEach(troop => { if(troop.name != t.name) { troopOption += `<option value="${troop.name}"> ${troop.name} </option>`; }  });
+             }
  
              
              troopSelect.innerHTML = `<select id="name${group}_${ind}" onchange="editTroop(${group}, ${ind})"> ${troopOption} </select>`;
@@ -175,6 +185,7 @@
          }
      }
  }
+
 function writeTroopActionSelect(group, id)
 {
     let elt = `<select id="troopActionSelect${group}_${id}" >  <option value="None"> ----- </option><option value="Move"> Movement </option>`;
@@ -187,6 +198,7 @@ function writeTroopActionSelect(group, id)
 
     return elt;
 }
+
 /** AREAS START */
 /** Toggler for the Polygon holder for an Area */
  function toggleAreaHolder(id)
@@ -217,45 +229,54 @@ function writeTroopActionSelect(group, id)
 /** Writes a given area onto the DOM  */
 function writeArea(id, area)
 {
-    let elt = document.querySelector("#areaHolder");
-    let n = document.createElement("div");
-    let name = area.name || ``;
-    let col = rgbToHex(area.coloration.levels[0], area.coloration.levels[1], area.coloration.levels[2]);
-    let pos = createVector(area.position.x / 100, area.position.y / 100);
-    let radius = area.radius;
-    let pointsAmount = area.pointsAmount;
-    let randomize = area.randomize;
-    let obstacle = (area.isObstacle) ? `checked` : ``;
-    let animated = (area.animated) ? `checked` : ``;
-    let alpha = 255-area.coloration.levels[3];
-
-    n.id = id;
-    n.innerHTML = `<div id="areaData${n.id}" style="cursor: pointer; border-bottom: 1px solid rgb(250,180,60);" >
-                        <input id="areaName${n.id}" onmouseover='writeExplanation("areaName", 2);' type="text" placeholder="Enter Area Name..." value="${name}" style="margin-right:2rem;" onchange="areas[${n.id}].name = this.value;" /> ${id}
-                        <input id="areaCol${n.id}"  onmouseover='writeExplanation("areaColor", 2);' type="color" onchange="areas[${n.id}].coloration = color(this.value);" value="${col}" style="margin-right:2rem; width:2rem;" /> 
-                        Transparency : <input id="areaAlpha${n.id}" style="margin-right:2rem;" onmouseover='writeExplanation("areaAlpha", 2);' type="range" step=1 min=0 max=255 value="${alpha}" onchange="areas[${n.id}].coloration.levels[3] = 255 - parseInt(this.value); " />
-                        Center : ( X =  <input style="width:2rem;" id="areaPosX${n.id}" type="number"  value="${pos.x}"  onchange="areas[${n.id}].position.x = Number.parseFloat(this.value * 100); redrawArea(${n.id});"  onmouseover='writeExplanation("areaPos", 2);' />
-                        , Y = <input style="width:2rem;" id="areaPosY${n.id}" type="number" value="${pos.y}" onchange="areas[${n.id}].position.y = Number.parseFloat(this.value * 100); redrawArea(${n.id});"  onmouseover='writeExplanation("areaPos", 2);' /> )
-                        <input style="width: 5rem; margin-left: 2rem;" id="${n.id}" type="submit" value="Clone" onclick="addArea(${n.id})"  onmouseover='writeExplanation("areaClone", 2);' />
-                        <input style="width: 5rem; margin-left: 2rem;" type="submit" value="Delete" onclick="deleteArea(${n.id});"  onmouseover='writeExplanation("areaDelete", 2);' /><br/>
-                        <input type="submit" value="See Polygon" style="width: 8rem;" onclick="toggleAreaHolder(${n.id})" onmouseover='writeExplanation("areaSeePoints", 2);'/> 
-                        Animate : <input type="checkbox" id="areaAnimate${n.id}" onchange="areas[${id}].animated = this.checked;" ${animated} /> 
-                        Obstacle : <input type="checkbox" id="areaObstacle${n.id}" onchange="areas[${id}].isObstacle = this.checked;" ${obstacle} /> 
-                    </div>
-                    <div id="areaH${n.id}" style="display:none; background-color:rgba(0,0,0,0.5); border-bottom: 1px solid rgb(250,180,60);"">
-                        Points <input style="width:2rem; margin-right:2rem;" id="areaPointsAmount${n.id}" type="number" value=${pointsAmount} onchange="areas[${n.id}].pointsAmount = this.value; redrawArea(${n.id})" onmouseover='writeExplanation("areaPoints", 2);' />  
-                        Radius <input id="areaSize${n.id}" type="number" value=${radius / 100} onchange="areas[${n.id}].radius = this.value * 100; redrawArea(${n.id})"  style="margin-right:2rem;" onmouseover='writeExplanation("areaRadius", 2);' />
-                        Randomness <input style="width:2rem;" id="areaRandom${n.id}" type="number" value=${randomize} onchange="areas[${n.id}].randomize = this.value; redrawArea(${n.id})" onmouseover='writeExplanation("areaRandom", 2);' style="margin-right:2rem;" /> 
-                        <input id="${n.id}" type="submit" value="Add Point" onclick="addPointToShape(${n.id});" style="margin-left:1rem; margin-right:2rem;" onmouseover='writeExplanation("areaRedraw", 2);'  /> 
-                        <input id="${n.id}" type="submit" value="Redraw Polygon" onclick="redrawArea(${n.id});" style="margin-left:1rem; margin-right:2rem;" onmouseover='writeExplanation("areaRedraw", 2);'  /> 
-                        <input id="${n.id}" type="submit" value="Subdivide Polygon" onclick="subdivide(${n.id},1, {identifySub: true});" style="margin-left:1rem; margin-right:2rem;" onmouseover='writeExplanation("areaRedraw", 2);'  /> 
-
-                        ${writePointsHTML(n.id, area.shape)}
-
-                    </div>`; 
-    elt.append(n);
+    if(! area.noWrite)
+    {
+        let elt = document.querySelector("#areaHolder");
+        let n = document.createElement("div");
+        let name = area.name || ``;
+        let col = area.coloration.slice(0,7);
+        let pos = createVector(area.position.x / 100, area.position.y / 100);
+        let radius = area.radius;
+        let pointsAmount = area.pointsAmount;
+        let randomize = area.randomize;
+        let obstacle = (area.isObstacle) ? `checked` : ``;
+        let animated = (area.animated) ? `checked` : ``;
+        let alpha = 0; // ALPHA is actually transparency... The more you have alpha, the more you have transparency. I know, it's dumb.
+    
+        n.id = id;
+        n.innerHTML = `<div id="areaData${n.id}" style="cursor: pointer; border-bottom: 1px solid rgb(250,180,60);" >
+                            <input id="areaName${n.id}" onmouseover='writeExplanation("areaName", 2);' type="text" placeholder="Enter Area Name..." value="${name}" style="margin-right:2rem;" onchange="areas[${n.id}].name = this.value;" /> ${id}
+                            <input id="areaCol${n.id}"  onmouseover='writeExplanation("areaColor", 2);' type="color" onchange="changeAreaColor(${n.id});" value="${col}" style="margin-right:2rem; width:2rem;" /> 
+                            Transparency : <input id="areaAlpha${n.id}" style="margin-right:2rem;" onmouseover='writeExplanation("areaAlpha", 2);' type="range" step=1 min=0 max=255 value="${alpha}" onchange="changeAreaColor(${n.id});" />
+                            Center : ( X =  <input style="width:2rem;" id="areaPosX${n.id}" type="number"  value="${pos.x}"  onchange="areas[${n.id}].position.x = Number.parseFloat(this.value * 100); redrawArea(${n.id});"  onmouseover='writeExplanation("areaPos", 2);' />
+                            , Y = <input style="width:2rem;" id="areaPosY${n.id}" type="number" value="${pos.y}" onchange="areas[${n.id}].position.y = Number.parseFloat(this.value * 100); redrawArea(${n.id});"  onmouseover='writeExplanation("areaPos", 2);' /> )
+                            <input style="width: 5rem; margin-left: 2rem;" id="${n.id}" type="submit" value="Clone" onclick="addArea(${n.id})"  onmouseover='writeExplanation("areaClone", 2);' />
+                            <input style="width: 5rem; margin-left: 2rem;" type="submit" value="Delete" onclick="deleteArea(${n.id});"  onmouseover='writeExplanation("areaDelete", 2);' /><br/>
+                            <input type="submit" value="See Polygon" style="width: 8rem;" onclick="toggleAreaHolder(${n.id})" onmouseover='writeExplanation("areaSeePoints", 2);'/> 
+                            Animate : <input type="checkbox" id="areaAnimate${n.id}" onchange="areas[${id}].animated = this.checked;" ${animated} /> 
+                            Obstacle : <input type="checkbox" id="areaObstacle${n.id}" onchange="areas[${id}].isObstacle = this.checked;" ${obstacle} /> 
+                        </div>
+                        <div id="areaH${n.id}" style="display:none; background-color:rgba(0,0,0,0.5); border-bottom: 1px solid rgb(250,180,60);"">
+                            Points <input style="width:2rem; margin-right:2rem;" id="areaPointsAmount${n.id}" type="number" value=${pointsAmount} onchange="areas[${n.id}].pointsAmount = this.value; redrawArea(${n.id})" onmouseover='writeExplanation("areaPoints", 2);' />  
+                            Radius <input id="areaSize${n.id}" type="number" value=${radius / 100} onchange="areas[${n.id}].radius = this.value * 100; redrawArea(${n.id})"  style="margin-right:2rem;" onmouseover='writeExplanation("areaRadius", 2);' />
+                            Randomness <input style="width:2rem;" id="areaRandom${n.id}" type="number" value=${randomize} onchange="areas[${n.id}].randomize = this.value; redrawArea(${n.id})" onmouseover='writeExplanation("areaRandom", 2);' style="margin-right:2rem;" /> 
+                            <input id="${n.id}" type="submit" value="Add Point" onclick="addPointToShape(${n.id});" style="margin-left:1rem; margin-right:2rem;" onmouseover='writeExplanation("areaRedraw", 2);'  /> 
+                            <input id="${n.id}" type="submit" value="Redraw Polygon" onclick="redrawArea(${n.id});" style="margin-left:1rem; margin-right:2rem;" onmouseover='writeExplanation("areaRedraw", 2);'  /> 
+                            <input id="${n.id}" type="submit" value="Subdivide Polygon" onclick="subdivide(${n.id},1, {identifySub: true});" style="margin-left:1rem; margin-right:2rem;" onmouseover='writeExplanation("areaRedraw", 2);'  /> 
+    
+                            ${writePointsHTML(n.id, area.shape)}
+    
+                        </div>`; 
+        elt.append(n);
+    }
 }
-
+function changeAreaColor(index)
+{
+    let c = document.querySelector(`#areaCol${index}`).value;
+    let alpha = 255 - Number.parseInt(document.querySelector(`#areaAlpha${index}`).value);
+    c += componentToHex(alpha);
+    areas[index].coloration = c;
+}
 /** Writes a row for each of the points in a given shape */
 function writePointsHTML(id, shape)
 {
