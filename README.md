@@ -9,7 +9,8 @@ Local Code for the PseudoRandom project. https://pseudorandom.glitch.me/
  * Local Storage is linked to file:// so it should remain as persistant as anywhere else.
  * Server-side features of the glitch host is not represented here, for ease of development. (Server features are still experimental)
  * There should be no need for an internet connection to have this running ( Google Fonts won't work, bo-hoo )
-
+ * It is recommended to use the Chrome browser and a 1920x1080 monitor. CSS is known to break otherwise.
+ 
 #### Controls
 ##### Camera Control
 * Mouse Wheel:Zoom in/out
