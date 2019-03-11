@@ -1,3 +1,4 @@
+// Contains the AI static class which handles decision making for the Combat Encounters.
 let aiData;
 class AI
 {
