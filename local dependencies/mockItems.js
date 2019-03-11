@@ -1,3 +1,4 @@
+// Contains definition for the Mundane weapons and the base modifiers associated with them.
 let mundaneWeapons = [
     {
         "name": "Battleaxe",
